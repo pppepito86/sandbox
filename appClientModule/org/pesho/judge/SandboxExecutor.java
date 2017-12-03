@@ -14,7 +14,6 @@ public class SandboxExecutor {
 
 	protected static AtomicInteger processCounter = new AtomicInteger(0);
 	
-	//protected File sandboxDir = new File("sandbox_" + processCounter.incrementAndGet());
 	protected ProcessExecutor processExecutor = new ProcessExecutor();
 
 	protected File sandboxDir = new File("workdir");
@@ -26,8 +25,6 @@ public class SandboxExecutor {
 	protected String output = "output";
 	protected String error = "error";
 	
-	//protected ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
-
 	public SandboxExecutor directory(File directory) {
 		sandboxDir = directory;
 		return this;
