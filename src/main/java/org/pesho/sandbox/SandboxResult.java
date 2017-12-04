@@ -1,10 +1,10 @@
-package org.pesho.judge;
+package org.pesho.sandbox;
 
-import static org.pesho.judge.CommandStatus.OOM;
-import static org.pesho.judge.CommandStatus.PROGRAM_ERROR;
-import static org.pesho.judge.CommandStatus.SUCCESS;
-import static org.pesho.judge.CommandStatus.SYSTEM_ERROR;
-import static org.pesho.judge.CommandStatus.TIMEOUT;
+import static org.pesho.sandbox.CommandStatus.OOM;
+import static org.pesho.sandbox.CommandStatus.PROGRAM_ERROR;
+import static org.pesho.sandbox.CommandStatus.SUCCESS;
+import static org.pesho.sandbox.CommandStatus.SYSTEM_ERROR;
+import static org.pesho.sandbox.CommandStatus.TIMEOUT;
 
 import java.io.File;
 

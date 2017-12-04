@@ -1,7 +1,6 @@
-import java.io.File;
+package  org.pesho.sandbox;
 
-import org.pesho.judge.SandboxExecutor;
-import org.pesho.judge.SandboxResult;
+import java.io.File;
 
 public class Main {
 

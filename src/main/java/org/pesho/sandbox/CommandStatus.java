@@ -1,4 +1,4 @@
-package org.pesho.judge;
+package org.pesho.sandbox;
 
 public enum CommandStatus {
 	

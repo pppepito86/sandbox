@@ -1,4 +1,4 @@
-package org.pesho.judge;
+package org.pesho.sandbox;
 
 import java.io.File;
 import java.util.ArrayList;
