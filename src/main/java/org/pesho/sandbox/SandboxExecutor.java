@@ -73,7 +73,7 @@ public class SandboxExecutor {
 		
 		System.out.println("command: " + printCommand());
 		try {
-			return new SandboxResult(processExecutor.execute(), sandboxDir, timeoutInSeconds);
+			return new SandboxResult(processExecutor.execute(), sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
 		} catch (TimeoutException e) {
 			return new SandboxResult(e);
 		} catch (Exception e) {

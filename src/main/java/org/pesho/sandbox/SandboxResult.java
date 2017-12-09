@@ -7,6 +7,7 @@ import static org.pesho.sandbox.CommandStatus.SYSTEM_ERROR;
 import static org.pesho.sandbox.CommandStatus.TIMEOUT;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.zeroturnaround.exec.ProcessOutput;
@@ -19,11 +20,11 @@ public class SandboxResult {
 	protected final CommandResult commandResult;
 	protected final Double time;
 
-	public SandboxResult(ProcessResult processResult, File outputDir, double timeout) {
+	public SandboxResult(ProcessResult processResult, File outputDir, double timeout, File errorFile) {
 		this.processResult = processResult;
 		this.outputDir = outputDir;
 		this.time = parseTime();
-		this.commandResult = parseResult(timeout);
+		this.commandResult = parseResult(timeout, errorFile);
 	}
 
 	public SandboxResult(Exception e) {
@@ -49,7 +50,7 @@ public class SandboxResult {
 		return time;
 	}
 
-	protected CommandResult parseResult(double timeout) {
+	protected CommandResult parseResult(double timeout, File errorFile) {
 		if (processResult.getExitValue() == 127)
 			return new CommandResult(SYSTEM_ERROR, "sandbox.sh not found");
 		else if (processResult.getExitValue() != 0)
@@ -63,12 +64,12 @@ public class SandboxResult {
 				if (exitCode == 0)
 					return new CommandResult(SUCCESS);
 				if (exitCode == 127)
-					return new CommandResult(CommandStatus.PROGRAM_NOT_FOUND);
+					return new CommandResult(SYSTEM_ERROR, "program not found");
 				if (exitCode == 137 && time > timeout)
 					return new CommandResult(TIMEOUT);
 				if (exitCode == 137 && time <= timeout)
 					return new CommandResult(OOM);
-				return new CommandResult(PROGRAM_ERROR);
+				return new CommandResult(PROGRAM_ERROR, readError(errorFile));
 			}
 
 			return new CommandResult(SYSTEM_ERROR, "result files do not exist");
@@ -76,6 +77,10 @@ public class SandboxResult {
 			// TODO log e.printStackTrace();
 			return new CommandResult(SYSTEM_ERROR, e.getMessage());
 		}
+	}
+
+	private String readError(File errorFile) throws IOException {
+		return FileUtils.readFileToString(errorFile);
 	}
 
 	protected Double parseTime() {
