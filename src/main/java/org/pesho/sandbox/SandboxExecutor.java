@@ -16,7 +16,7 @@ public class SandboxExecutor {
 	
 	protected ProcessExecutor processExecutor = new ProcessExecutor();
 
-	protected File sandboxDir = new File("workdir");
+	protected File sandboxDir = new File(".");
 	protected List<String> userCommand = new ArrayList<>();
 	protected double timeoutInSeconds = 5.0;
 	protected double extraTimeoutInSeconds = 10.0;
@@ -99,7 +99,7 @@ public class SandboxExecutor {
 		return command;
 	}
 
-	protected String printCommand() {
+	public String printCommand() {
 		StringBuilder result = new StringBuilder(String.join(" ", getDockerCommand()));
 		result.append(" ").append("\"" + String.join(" ", userCommand) +"\"");
 		result.append(" ").append(String.valueOf(timeoutInSeconds));
@@ -122,6 +122,8 @@ public class SandboxExecutor {
 		dockerCommand.add("1");
 		dockerCommand.add("--memory");
 		dockerCommand.add(memoryInMB + "M");
+		dockerCommand.add("--network");
+		dockerCommand.add("none");
 		dockerCommand.add("--rm");
 		dockerCommand.add("pppepito86/judge");
 		dockerCommand.add("/scripts/sandbox.sh");		
