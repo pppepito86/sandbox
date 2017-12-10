@@ -1,6 +1,7 @@
 package org.pesho.sandbox;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -8,7 +9,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.io.FileUtils;
 import org.zeroturnaround.exec.ProcessExecutor;
+import org.zeroturnaround.exec.ProcessResult;
 
 public class SandboxExecutor {
 
@@ -16,7 +19,7 @@ public class SandboxExecutor {
 	
 	protected ProcessExecutor processExecutor = new ProcessExecutor();
 
-	protected File sandboxDir = new File(".");
+	protected File sandboxDir = new File(".").getAbsoluteFile();
 	protected List<String> userCommand = new ArrayList<>();
 	protected double timeoutInSeconds = 5.0;
 	protected double extraTimeoutInSeconds = 10.0;
@@ -24,9 +27,12 @@ public class SandboxExecutor {
 	protected String input = "input";
 	protected String output = "output";
 	protected String error = "error";
+	protected boolean clean = true;
+	protected String containerName = null;
 	
 	public SandboxExecutor directory(File directory) {
-		sandboxDir = directory;
+		sandboxDir = directory.getAbsoluteFile();
+		if (sandboxDir.exists()) clean = false;
 		return this;
 	}
 	
@@ -64,6 +70,18 @@ public class SandboxExecutor {
 		this.error = error;
 		return this;
 	}
+
+	public SandboxExecutor clean(boolean clean) {
+		if (clean && sandboxDir.exists()) return this;
+		
+		this.clean = clean;
+		return this;
+	}
+	
+	public SandboxExecutor name(String containerName) {
+		this.containerName = containerName;
+		return this;
+	}
 	
 	public SandboxResult execute() {
 		if (!sandboxDir.exists()) sandboxDir.mkdirs();
@@ -73,15 +91,28 @@ public class SandboxExecutor {
 		
 		System.out.println("command: " + printCommand());
 		try {
-			return new SandboxResult(processExecutor.execute(), sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
+			ProcessResult processResult = processExecutor.execute();
+			return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
 		} catch (TimeoutException e) {
 			return new SandboxResult(e);
 		} catch (Exception e) {
 			// TODO log e.printStackTrace();
 			return new SandboxResult(e);
+		} finally {
+			if (clean) {
+				clean();
+			}
 		}
 	}
 	
+	private void clean() {
+		try {
+			FileUtils.deleteDirectory(sandboxDir);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public SandboxExecutor readOutput(boolean readOutput) {
 		processExecutor.readOutput(readOutput);
 		return this;
@@ -114,10 +145,12 @@ public class SandboxExecutor {
 		List<String> dockerCommand = new ArrayList<>();
 		dockerCommand.add("docker");
 		dockerCommand.add("run");
-		dockerCommand.add("--name");
-		dockerCommand.add("cont2");
+		if (containerName != null) {
+			dockerCommand.add("--name");
+			dockerCommand.add(containerName);
+		}
 		dockerCommand.add("--volume");
-		dockerCommand.add(sandboxDir.getAbsolutePath() + ":/shared/");
+		dockerCommand.add(sandboxDir + ":/shared/");
 		dockerCommand.add("--cpus");
 		dockerCommand.add("1");
 		dockerCommand.add("--memory");
