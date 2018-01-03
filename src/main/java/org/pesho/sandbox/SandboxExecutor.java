@@ -1,7 +1,6 @@
 package org.pesho.sandbox;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -96,22 +95,12 @@ public class SandboxExecutor {
 			e.printStackTrace();
 			return new SandboxResult(e);
 		} finally {
-			System.out.println("Clean is: " + clean);
 			if (clean) {
-				clean();
+				FileUtils.deleteQuietly(sandboxDir);
 			}
 		}
 	}
 	
-	private void clean() {
-		try {
-			System.out.println("About to clean: " + sandboxDir);
-			FileUtils.deleteDirectory(sandboxDir);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	public SandboxExecutor readOutput(boolean readOutput) {
 		processExecutor.readOutput(readOutput);
 		return this;
