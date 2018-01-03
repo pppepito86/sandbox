@@ -96,9 +96,10 @@ public class SandboxExecutor {
 		} catch (TimeoutException e) {
 			return new SandboxResult(e);
 		} catch (Exception e) {
-			// TODO log e.printStackTrace();
+			e.printStackTrace();
 			return new SandboxResult(e);
 		} finally {
+			System.out.println("Clean is: " + clean);
 			if (clean) {
 				clean();
 			}
@@ -107,6 +108,7 @@ public class SandboxExecutor {
 	
 	private void clean() {
 		try {
+			System.out.println("About to clean: " + sandboxDir);
 			FileUtils.deleteDirectory(sandboxDir);
 		} catch (IOException e) {
 			e.printStackTrace();
