@@ -27,12 +27,11 @@ public class SandboxExecutor {
 	protected String input = "input";
 	protected String output = "output";
 	protected String error = "error";
-	protected boolean clean = true;
+	protected boolean clean = false;
 	protected String containerName = null;
 	
 	public SandboxExecutor directory(File directory) {
 		sandboxDir = directory.getAbsoluteFile();
-		if (sandboxDir.exists()) clean = false;
 		return this;
 	}
 	
@@ -72,8 +71,6 @@ public class SandboxExecutor {
 	}
 
 	public SandboxExecutor clean(boolean clean) {
-		if (clean && sandboxDir.exists()) return this;
-		
 		this.clean = clean;
 		return this;
 	}
