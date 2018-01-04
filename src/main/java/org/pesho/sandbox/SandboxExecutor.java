@@ -140,7 +140,7 @@ public class SandboxExecutor {
 		dockerCommand.add("--volume");
 		dockerCommand.add(sandboxDir + ":/shared/");
 		dockerCommand.add("--cpus");
-		dockerCommand.add("1");
+		dockerCommand.add("0.8");
 		dockerCommand.add("--memory");
 		dockerCommand.add(memoryInMB + "M");
 		dockerCommand.add("--network");
