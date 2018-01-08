@@ -143,6 +143,8 @@ public class SandboxExecutor {
 		dockerCommand.add("0.8");
 		dockerCommand.add("--memory");
 		dockerCommand.add(memoryInMB + "M");
+		dockerCommand.add("--memory-swap");
+		dockerCommand.add(memoryInMB + "M");
 		dockerCommand.add("--network");
 		dockerCommand.add("none");
 		dockerCommand.add("--rm");
