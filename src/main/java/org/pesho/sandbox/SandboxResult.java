@@ -64,12 +64,12 @@ public class SandboxResult {
 				if (exitCode == 0)
 					return new CommandResult(SUCCESS, null, getTime());
 				if (exitCode == 127)
-					return new CommandResult(SYSTEM_ERROR, "program not found");
+					return new CommandResult(SYSTEM_ERROR, "program not found", getTime());
 				if (exitCode == 137 && time > timeout)
-					return new CommandResult(TIMEOUT);
+					return new CommandResult(TIMEOUT, null, getTime());
 				if (exitCode == 137 && time <= timeout)
-					return new CommandResult(OOM);
-				return new CommandResult(PROGRAM_ERROR, readError(errorFile));
+					return new CommandResult(OOM, null, getTime());
+				return new CommandResult(PROGRAM_ERROR, readError(errorFile), getTime());
 			}
 
 			return new CommandResult(SYSTEM_ERROR, "result files do not exist");
