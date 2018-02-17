@@ -112,6 +112,7 @@ public class SandboxExecutor {
 		command.addAll(dockerCommand);
 		command.add(String.join(" ", userCommand));
 		command.add(String.valueOf(timeoutInSeconds));
+		command.add(String.valueOf(memoryInMB * 1024));
 		command.add(input);
 		command.add(output);
 		command.add(error);
@@ -122,6 +123,7 @@ public class SandboxExecutor {
 		StringBuilder result = new StringBuilder(String.join(" ", getDockerCommand()));
 		result.append(" ").append("\"" + String.join(" ", userCommand) +"\"");
 		result.append(" ").append(String.valueOf(timeoutInSeconds));
+		result.append(" ").append(String.valueOf(memoryInMB * 1024));
 		result.append(" ").append(input);
 		result.append(" ").append(output);
 		result.append(" ").append(error);
@@ -142,9 +144,9 @@ public class SandboxExecutor {
 		dockerCommand.add("--cpus");
 		dockerCommand.add("0.8");
 		dockerCommand.add("--memory");
-		dockerCommand.add(memoryInMB + "M");
+		dockerCommand.add((memoryInMB+10) + "M");
 		dockerCommand.add("--memory-swap");
-		dockerCommand.add(memoryInMB + "M");
+		dockerCommand.add((memoryInMB+10) + "M");
 		dockerCommand.add("--network");
 		dockerCommand.add("none");
 		dockerCommand.add("--rm");

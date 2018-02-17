@@ -47,7 +47,10 @@ public class SandboxResult {
 	}
 
 	public Double getTime() {
-		return time;
+		Double timeToReturn = time;
+		if (timeToReturn == null || timeToReturn == 0) timeToReturn = 0.01;
+		timeToReturn = Math.round(timeToReturn * 100)/100.0;
+		return timeToReturn;
 	}
 	
 	protected CommandResult parseResult(double timeout, File errorFile) {
@@ -65,9 +68,9 @@ public class SandboxResult {
 					return new CommandResult(SUCCESS, null, getTime());
 				if (exitCode == 127)
 					return new CommandResult(SYSTEM_ERROR, "program not found", getTime());
-				if (exitCode == 137 && time > timeout)
+				if (exitCode == 137 && getTime() > timeout)
 					return new CommandResult(TIMEOUT, null, getTime());
-				if (exitCode == 137 && time <= timeout)
+				if (exitCode == 137 && getTime() <= timeout)
 					return new CommandResult(OOM, null, getTime());
 				return new CommandResult(PROGRAM_ERROR, readError(errorFile), getTime());
 			}
