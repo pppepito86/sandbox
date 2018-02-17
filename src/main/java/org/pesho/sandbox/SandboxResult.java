@@ -47,10 +47,11 @@ public class SandboxResult {
 	}
 	
 	public Double getTime() {
-		Double timeToReturn = time;
-		if (timeToReturn == null || timeToReturn < 0.01) timeToReturn = 0.01;
-		timeToReturn = Math.round(timeToReturn * 100)/100.0;
-		return timeToReturn;
+		return time;
+//		Double timeToReturn = time;
+//		if (timeToReturn == null || timeToReturn < 0.01) timeToReturn = 0.01;
+//		timeToReturn = Math.round(timeToReturn * 100)/100.0;
+//		return timeToReturn;
 	}
 	
 	protected CommandResult parseResult(double timeout, File errorFile) {
