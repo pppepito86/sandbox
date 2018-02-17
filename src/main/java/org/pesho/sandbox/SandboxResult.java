@@ -45,7 +45,7 @@ public class SandboxResult {
 	public CommandStatus getStatus() {
 		return commandResult.getStatus();
 	}
-
+	
 	public Double getTime() {
 		Double timeToReturn = time;
 		if (timeToReturn == null || timeToReturn == 0) timeToReturn = 0.01;
@@ -68,7 +68,7 @@ public class SandboxResult {
 					return new CommandResult(SUCCESS, null, getTime());
 				if (exitCode == 127)
 					return new CommandResult(SYSTEM_ERROR, "program not found", getTime());
-				if (exitCode == 137 && getTime() > timeout)
+				if (exitCode == 137 && getTime() >= timeout)
 					return new CommandResult(TIMEOUT, null, getTime());
 				if (exitCode == 137 && getTime() <= timeout)
 					return new CommandResult(OOM, null, getTime());
