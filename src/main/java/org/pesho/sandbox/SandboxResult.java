@@ -67,8 +67,7 @@ public class SandboxResult {
 				int exitCode = Integer.valueOf(FileUtils.readFileToString(exitCodeFile).trim());
 				if (exitCode == 0)
 					return new CommandResult(SUCCESS, null, getTime());
-				if (exitCode == 127)
-					return new CommandResult(SYSTEM_ERROR, "program not found", getTime());
+				// TODO check program exists
 				if (exitCode == 137 && getTime() >= timeout)
 					return new CommandResult(TIMEOUT, null, getTime());
 				if (exitCode == 137 && getTime() <= timeout)
