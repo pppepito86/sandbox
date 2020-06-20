@@ -52,6 +52,10 @@ public class SandboxResult {
 		return (Double) metadata.get("time");
 	}
 
+	public Long getMemory() {
+		return (Long) metadata.get("memory");
+	}
+
 	public Integer getExitcode() {
 		return (Integer) metadata.get("exitcode");
 	}
@@ -67,16 +71,16 @@ public class SandboxResult {
 			}
 			// Suicide with signal (memory limit, segfault, abort): returning the error to the user.
 			if ("SG".equals(metadata.get("status"))) {
-				return new CommandResult(PROGRAM_ERROR, readError(errorFile), getTime());
+				return new CommandResult(PROGRAM_ERROR, readError(errorFile), getTime(), getMemory());
 			}
 			// Sandbox error: this isn't a user error, the administrator needs to check the environment.
 			if ("XX".equals(metadata.get("status"))) {
 				return new CommandResult(SYSTEM_ERROR);
 			}
 			if (getExitcode() != 0) {
-				return new CommandResult(PROGRAM_ERROR, readError(errorFile), getTime());
+				return new CommandResult(PROGRAM_ERROR, readError(errorFile), getTime(), getMemory());
 			}
-			return new CommandResult(SUCCESS, readError(errorFile), getTime());
+			return new CommandResult(SUCCESS, readError(errorFile), getTime(), getMemory());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new CommandResult(SYSTEM_ERROR, e.getMessage());

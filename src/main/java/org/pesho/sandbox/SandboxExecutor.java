@@ -39,8 +39,6 @@ public class SandboxExecutor {
 	}
 	
 	public SandboxExecutor command(String... command) {
-		if (command[0].equals("g++")) command[0] = "/usr/bin/g++";
-		if (command[0].equals("./solution")) command[0] = "/shared/solution";
 		Arrays.stream(command).forEach(userCommand::add);
 		return this;
 	}
@@ -92,13 +90,7 @@ public class SandboxExecutor {
 			createSandbox();
 			if (!sandboxDir.exists()) sandboxDir.mkdirs();
 			System.out.println("sandbox dir: " + sandboxDir.getAbsolutePath());
-			for (File file: sandboxDir.listFiles()) {
-				System.out.println("file: " + file.getAbsolutePath());
-				if (file.getName().equals("solution")) {
-					new ProcessExecutor().command("chmod", "+x", file.getAbsolutePath());
-				}
-				FileUtils.copyFile(file, new File("/var/local/lib/isolate/0/box/" + file.getName()));
-			}
+
 			processExecutor.command(buildCommand());
 			long hardTimeout = Math.round((2*timeoutInSeconds+1+extraTimeoutInSeconds)*1000);
 			processExecutor.timeout(hardTimeout, TimeUnit.MILLISECONDS);
@@ -111,7 +103,6 @@ public class SandboxExecutor {
 				FileUtils.copyFile(file, new File(sandboxDir, file.getName()));
 			}
 			SandboxResult sandboxResult = new SandboxResult(processResult, sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
-			System.out.println(sandboxResult.getResult().getReason());
 			return sandboxResult;
 		} catch (TimeoutException e) {
 			return new SandboxResult(e);
@@ -154,6 +145,8 @@ public class SandboxExecutor {
 		isolateCommand.add("/etc");
 		isolateCommand.add("-d");
 		isolateCommand.add("/shared="+sandboxDir);
+		isolateCommand.add("-c");
+		isolateCommand.add("/shared");
 		isolateCommand.add("-M");
 		isolateCommand.add(new File(sandboxDir, "metadata").getAbsolutePath());
 		isolateCommand.add("-m");
@@ -167,9 +160,9 @@ public class SandboxExecutor {
 			isolateCommand.add(input);
 		}
 		isolateCommand.add("-o");
-		isolateCommand.add(output);
+		isolateCommand.add("/box/" + output);
 		isolateCommand.add("-r");
-		isolateCommand.add(error);
+		isolateCommand.add("/box/" + error);
 		isolateCommand.add("--");
 		isolateCommand.addAll(userCommand);
 		return isolateCommand;
