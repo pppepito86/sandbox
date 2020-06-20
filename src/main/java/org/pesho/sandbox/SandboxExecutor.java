@@ -94,6 +94,9 @@ public class SandboxExecutor {
 			System.out.println("sandbox dir: " + sandboxDir.getAbsolutePath());
 			for (File file: sandboxDir.listFiles()) {
 				System.out.println("file: " + file.getAbsolutePath());
+				if (file.getName().equals("solution")) {
+					new ProcessExecutor().command("chmod", "+x", file.getAbsolutePath());
+				}
 				FileUtils.copyFile(file, new File("/var/local/lib/isolate/0/box/" + file.getName()));
 			}
 			processExecutor.command(buildCommand());
