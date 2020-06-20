@@ -39,6 +39,7 @@ public class SandboxExecutor {
 	}
 	
 	public SandboxExecutor command(String... command) {
+		if (command[0].equals("g++")) command[0] = "/usr/bin/g++";
 		Arrays.stream(command).forEach(userCommand::add);
 		return this;
 	}
@@ -138,6 +139,8 @@ public class SandboxExecutor {
 		}
 		isolateCommand.add("-e");
 		isolateCommand.add("-p");
+		isolateCommand.add("-d");
+		isolateCommand.add("etc");
 //		isolateCommand.add("-d");
 //		isolateCommand.add("/shared="+sandboxDir);
 		isolateCommand.add("-M");
