@@ -97,7 +97,7 @@ public class SandboxExecutor {
 			createSandbox();
 			ProcessResult processResult = processExecutor.execute();
 			FileUtils.copyFile(new File("/var/local/lib/isolate/0/box/"+output), new File(sandboxDir, output));
-			FileUtils.copyFile(new File("/var/local/lib/isolate/1/box/"+error), new File(sandboxDir, error));
+			FileUtils.copyFile(new File("/var/local/lib/isolate/0/box/"+error), new File(sandboxDir, error));
 			return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
 		} catch (TimeoutException e) {
 			return new SandboxResult(e);
