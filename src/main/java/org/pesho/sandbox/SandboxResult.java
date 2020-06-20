@@ -25,8 +25,8 @@ public class SandboxResult {
 	public SandboxResult(ProcessResult processResult, File outputDir, double timeout, File errorFile) {
 		this.processResult = processResult;
 		this.outputDir = outputDir;
-		this.commandResult = parseResult(timeout, errorFile);
 		this.metadata = getMetadata();
+		this.commandResult = parseResult(timeout, errorFile);
 	}
 
 	public SandboxResult(Exception e) {
