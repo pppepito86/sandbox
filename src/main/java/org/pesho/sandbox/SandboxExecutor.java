@@ -101,9 +101,10 @@ public class SandboxExecutor {
 			
 			System.out.println("command: " + this);
 			ProcessResult processResult = processExecutor.execute();
-			FileUtils.copyFile(new File("/var/local/lib/isolate/0/box/"+output), new File(sandboxDir, output));
-			if (new File("/var/local/lib/isolate/0/box/"+error).exists()) {
-				FileUtils.copyFile(new File("/var/local/lib/isolate/0/box/"+error), new File(sandboxDir, error));
+			
+			for (File file: new File("/var/local/lib/isolate/0/box").listFiles()) {
+				System.out.println("file: " + file.getAbsolutePath());
+				FileUtils.copyFile(file, new File(sandboxDir, file.getName()));
 			}
 			SandboxResult sandboxResult = new SandboxResult(processResult, sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
 			System.out.println(sandboxResult.getResult().getReason());
