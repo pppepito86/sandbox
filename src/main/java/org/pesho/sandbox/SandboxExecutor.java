@@ -156,7 +156,7 @@ public class SandboxExecutor {
 		isolateCommand.add(String.valueOf(2*timeoutInSeconds+1));
 		if (input != null) {
 			isolateCommand.add("-i");
-			isolateCommand.add(input);
+			isolateCommand.add("/shared/" + input);
 		}
 		isolateCommand.add("-o");
 		isolateCommand.add(output);
