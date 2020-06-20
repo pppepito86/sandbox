@@ -103,7 +103,7 @@ public class SandboxResult {
 					String[] split = line.split(":");
 					if ("time".equals(split[0])) map.put("time", Double.valueOf(split[1].trim()));
 					if ("time-wall".equals(split[0])) map.put("time-wall", Double.valueOf(split[1].trim()));
-					if ("max-rss".equals(split[0])) map.put("max-rss", Integer.valueOf(split[1].trim()));
+					if ("max-rss".equals(split[0])) map.put("max-rss", Long.valueOf(split[1].trim()));
 					if ("exitcode".equals(split[0])) map.put("exitcode", Integer.valueOf(split[1].trim()));
 					if ("status".equals(split[0])) map.put("status", split[1].trim());
 				}
