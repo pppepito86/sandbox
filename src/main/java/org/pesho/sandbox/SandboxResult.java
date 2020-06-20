@@ -58,7 +58,7 @@ public class SandboxResult {
 	
 	protected CommandResult parseResult(double timeout, File errorFile) {
 		if (processResult.getExitValue() == 127) return new CommandResult(SYSTEM_ERROR, "sandbox.sh not found");
-		else if (processResult.getExitValue() != 0)return new CommandResult(SYSTEM_ERROR, "docker failed with exitcode (" + processResult.getExitValue() + ")");
+		else if (processResult.getExitValue() != 0) return new CommandResult(SYSTEM_ERROR, "docker failed with exitcode (" + processResult.getExitValue() + ")");
 
 		try {
 		    // Timeout: returning the error to the user.
@@ -78,11 +78,13 @@ public class SandboxResult {
 			}
 			return new CommandResult(SUCCESS, readError(errorFile), getTime());
 		} catch (Exception e) {
+			e.printStackTrace();
 			return new CommandResult(SYSTEM_ERROR, e.getMessage());
 		}
 	}
 
 	private String readError(File errorFile) throws IOException {
+		if (!errorFile.exists()) return null;
 		return FileUtils.readFileToString(errorFile);
 	}
 

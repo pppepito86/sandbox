@@ -105,7 +105,9 @@ public class SandboxExecutor {
 			if (new File("/var/local/lib/isolate/0/box/"+error).exists()) {
 				FileUtils.copyFile(new File("/var/local/lib/isolate/0/box/"+error), new File(sandboxDir, error));
 			}
-			return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
+			SandboxResult sandboxResult = new SandboxResult(processResult, sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
+			System.out.println(sandboxResult.getResult().getReason());
+			return sandboxResult;
 		} catch (TimeoutException e) {
 			return new SandboxResult(e);
 		} catch (Exception e) {
