@@ -53,7 +53,7 @@ public class SandboxResult {
 	}
 
 	public Long getMemory() {
-		return (Long) metadata.get("memory");
+		return (Long) metadata.get("max-rss");
 	}
 
 	public Integer getExitcode() {
