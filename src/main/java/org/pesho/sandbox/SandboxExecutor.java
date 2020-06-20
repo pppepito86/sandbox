@@ -146,8 +146,6 @@ public class SandboxExecutor {
 		isolateCommand.add("/etc");
 		isolateCommand.add("-d");
 		isolateCommand.add("/shared="+sandboxDir);
-		isolateCommand.add("-c");
-		isolateCommand.add("/shared");
 		isolateCommand.add("-M");
 		isolateCommand.add(new File(sandboxDir, "metadata").getAbsolutePath());
 		isolateCommand.add("-m");
@@ -161,9 +159,9 @@ public class SandboxExecutor {
 			isolateCommand.add(input);
 		}
 		isolateCommand.add("-o");
-		isolateCommand.add("/box/" + output);
+		isolateCommand.add(output);
 		isolateCommand.add("-r");
-		isolateCommand.add("/box/" + error);
+		isolateCommand.add(error);
 		isolateCommand.add("--");
 		isolateCommand.addAll(userCommand);
 		return isolateCommand;
