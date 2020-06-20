@@ -23,7 +23,7 @@ public class SandboxExecutor {
 	protected double timeoutInSeconds = 5.0;
 	protected double extraTimeoutInSeconds = 1.0;
 	protected int memoryInMB = 256;
-	protected String input = "input";
+	protected String input = null;
 	protected String output = "output";
 	protected String error = "error";
 	protected boolean clean = false;
@@ -96,6 +96,8 @@ public class SandboxExecutor {
 		try {
 			createSandbox();
 			ProcessResult processResult = processExecutor.execute();
+			FileUtils.copyFile(new File("/var/local/lib/isolate/0/box/"+input), new File(sandboxDir, input));
+			FileUtils.copyFile(new File("/var/local/lib/isolate/1/box/"+error), new File(sandboxDir, error));
 			return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
 		} catch (TimeoutException e) {
 			return new SandboxResult(e);
@@ -106,9 +108,6 @@ public class SandboxExecutor {
 			try {
 				if (clean) {
 					FileUtils.deleteQuietly(sandboxDir);
-				} else {
-					FileUtils.copyFile(new File("/var/local/lib/isolate/0/box/"+input), new File(sandboxDir, input));
-					FileUtils.copyFile(new File("/var/local/lib/isolate/1/box/"+error), new File(sandboxDir, error));
 				}
 				destroySandbox();
 			} catch (Exception e) {
@@ -145,8 +144,10 @@ public class SandboxExecutor {
 		isolateCommand.add(String.valueOf(timeoutInSeconds));
 		isolateCommand.add("-w");
 		isolateCommand.add(String.valueOf(2*timeoutInSeconds+1));
-		isolateCommand.add("-i");
-		isolateCommand.add("/shared/" + input);
+		if (input != null) {
+			isolateCommand.add("-i");
+			isolateCommand.add("/shared/" + input);
+		}
 		isolateCommand.add("-o");
 		isolateCommand.add(output);
 		isolateCommand.add("-r");
