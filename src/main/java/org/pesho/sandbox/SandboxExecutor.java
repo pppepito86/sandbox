@@ -40,6 +40,7 @@ public class SandboxExecutor {
 	
 	public SandboxExecutor command(String... command) {
 		if (command[0].equals("g++")) command[0] = "/usr/bin/g++";
+		if (command[0].equals("./solution")) command[0] = "/shared/solution";
 		Arrays.stream(command).forEach(userCommand::add);
 		return this;
 	}
@@ -147,13 +148,13 @@ public class SandboxExecutor {
 		isolateCommand.add("-e");
 		isolateCommand.add("-p");
 		isolateCommand.add("-d");
-		isolateCommand.add("etc");
-//		isolateCommand.add("-d");
-//		isolateCommand.add("/shared="+sandboxDir);
+		isolateCommand.add("/etc");
+		isolateCommand.add("-d");
+		isolateCommand.add("/shared="+sandboxDir);
 		isolateCommand.add("-M");
 		isolateCommand.add(new File(sandboxDir, "metadata").getAbsolutePath());
 		isolateCommand.add("-m");
-		isolateCommand.add(String.valueOf(256 * memoryInMB));
+		isolateCommand.add(String.valueOf(1024 * memoryInMB));
 		isolateCommand.add("-t");
 		isolateCommand.add(String.valueOf(timeoutInSeconds));
 		isolateCommand.add("-w");
