@@ -39,7 +39,6 @@ public class SandboxExecutor {
 	}
 	
 	public SandboxExecutor command(String... command) {
-		command[0] = "/shared/" + command[0];
 		Arrays.stream(command).forEach(userCommand::add);
 		return this;
 	}
@@ -87,13 +86,14 @@ public class SandboxExecutor {
 	}
 	
 	public SandboxResult execute() {
-		if (!sandboxDir.exists()) sandboxDir.mkdirs();
-		processExecutor.command(buildCommand());
-		long hardTimeout = Math.round((2*timeoutInSeconds+1+extraTimeoutInSeconds)*1000);
-		processExecutor.timeout(hardTimeout, TimeUnit.MILLISECONDS);
-		
-		System.out.println("command: " + this);
 		try {
+			if (!sandboxDir.exists()) sandboxDir.mkdirs();
+			for (File file: sandboxDir.listFiles()) FileUtils.copyFile(file, new File("/var/local/lib/isolate/0/box", file.getName()));
+			processExecutor.command(buildCommand());
+			long hardTimeout = Math.round((2*timeoutInSeconds+1+extraTimeoutInSeconds)*1000);
+			processExecutor.timeout(hardTimeout, TimeUnit.MILLISECONDS);
+			
+			System.out.println("command: " + this);
 			createSandbox();
 			ProcessResult processResult = processExecutor.execute();
 			FileUtils.copyFile(new File("/var/local/lib/isolate/0/box/"+output), new File(sandboxDir, output));
@@ -136,8 +136,10 @@ public class SandboxExecutor {
 			isolateCommand.add("-b");
 			isolateCommand.add(containerName);
 		}
-		isolateCommand.add("-d");
-		isolateCommand.add("/shared="+sandboxDir);
+		isolateCommand.add("-e");
+		isolateCommand.add("-p");
+//		isolateCommand.add("-d");
+//		isolateCommand.add("/shared="+sandboxDir);
 		isolateCommand.add("-M");
 		isolateCommand.add(new File(sandboxDir, "metadata").getAbsolutePath());
 		isolateCommand.add("-m");
@@ -148,7 +150,7 @@ public class SandboxExecutor {
 		isolateCommand.add(String.valueOf(2*timeoutInSeconds+1));
 		if (input != null) {
 			isolateCommand.add("-i");
-			isolateCommand.add("/shared/" + input);
+			isolateCommand.add(input);
 		}
 		isolateCommand.add("-o");
 		isolateCommand.add(output);
