@@ -20,7 +20,7 @@ public class SandboxExecutor {
 
 	protected File sandboxDir = new File(".").getAbsoluteFile();
 	protected List<String> userCommand = new ArrayList<>();
-	protected double timeoutInSeconds = 1.0;
+	protected double timeoutInSeconds = 5.0;
 	protected double extraTimeoutInSeconds = 1.0;
 	protected int memoryInMB = 256;
 	protected String input = "input";
