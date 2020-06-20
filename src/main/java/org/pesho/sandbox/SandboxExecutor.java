@@ -89,7 +89,11 @@ public class SandboxExecutor {
 	public SandboxResult execute() {
 		try {
 			if (!sandboxDir.exists()) sandboxDir.mkdirs();
-			for (File file: sandboxDir.listFiles()) FileUtils.copyFile(file, new File("/var/local/lib/isolate/0/box", file.getName()));
+			System.out.println("sandbox dir: " + sandboxDir.getAbsolutePath());
+			for (File file: sandboxDir.listFiles()) {
+				System.out.println("file: " + file.getAbsolutePath());
+				FileUtils.copyFile(file, new File("/var/local/lib/isolate/0/box/" + file.getName()));
+			}
 			processExecutor.command(buildCommand());
 			long hardTimeout = Math.round((2*timeoutInSeconds+1+extraTimeoutInSeconds)*1000);
 			processExecutor.timeout(hardTimeout, TimeUnit.MILLISECONDS);
