@@ -96,7 +96,7 @@ public class SandboxExecutor {
 		try {
 			createSandbox();
 			ProcessResult processResult = processExecutor.execute();
-			FileUtils.copyFile(new File("/var/local/lib/isolate/0/box/"+input), new File(sandboxDir, input));
+			FileUtils.copyFile(new File("/var/local/lib/isolate/0/box/"+output), new File(sandboxDir, output));
 			FileUtils.copyFile(new File("/var/local/lib/isolate/1/box/"+error), new File(sandboxDir, error));
 			return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
 		} catch (TimeoutException e) {
@@ -106,10 +106,10 @@ public class SandboxExecutor {
 			return new SandboxResult(e);
 		} finally {
 			try {
+				destroySandbox();
 				if (clean) {
 					FileUtils.deleteQuietly(sandboxDir);
 				}
-				destroySandbox();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
