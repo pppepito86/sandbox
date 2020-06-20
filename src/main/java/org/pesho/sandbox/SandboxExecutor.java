@@ -20,8 +20,8 @@ public class SandboxExecutor {
 
 	protected File sandboxDir = new File(".").getAbsoluteFile();
 	protected List<String> userCommand = new ArrayList<>();
-	protected double timeoutInSeconds = 5.0;
-	protected double extraTimeoutInSeconds = 10.0;
+	protected double timeoutInSeconds = 1.0;
+	protected double extraTimeoutInSeconds = 1.0;
 	protected int memoryInMB = 256;
 	protected String input = "input";
 	protected String output = "output";
@@ -38,8 +38,8 @@ public class SandboxExecutor {
 		return command(command.split(" "));
 	}
 	
-	
 	public SandboxExecutor command(String... command) {
+		command[0] = "/shared/" + command[0];
 		Arrays.stream(command).forEach(userCommand::add);
 		return this;
 	}
@@ -79,14 +79,22 @@ public class SandboxExecutor {
 		return this;
 	}
 	
+	public void createSandbox() throws Exception {
+		new ProcessExecutor().command("isolate", "--init").execute();
+	}
+	public void destroySandbox() throws Exception {
+		new ProcessExecutor().command("isolate", "--cleanup").execute();
+	}
+	
 	public SandboxResult execute() {
 		if (!sandboxDir.exists()) sandboxDir.mkdirs();
 		processExecutor.command(buildCommand());
-		long sandboxTimeout = (long) (((timeoutInSeconds + extraTimeoutInSeconds))*1000);
-		processExecutor.timeout(sandboxTimeout, TimeUnit.MILLISECONDS);
+		long hardTimeout = Math.round((2*timeoutInSeconds+1+extraTimeoutInSeconds)*1000);
+		processExecutor.timeout(hardTimeout, TimeUnit.MILLISECONDS);
 		
-		System.out.println("command: " + printCommand());
+		System.out.println("command: " + this);
 		try {
+			createSandbox();
 			ProcessResult processResult = processExecutor.execute();
 			return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
 		} catch (TimeoutException e) {
@@ -95,8 +103,16 @@ public class SandboxExecutor {
 			e.printStackTrace();
 			return new SandboxResult(e);
 		} finally {
-			if (clean) {
-				FileUtils.deleteQuietly(sandboxDir);
+			try {
+				if (clean) {
+					FileUtils.deleteQuietly(sandboxDir);
+				} else {
+					FileUtils.copyFile(new File("/var/local/lib/isolate/0/box/"+input), new File(sandboxDir, input));
+					FileUtils.copyFile(new File("/var/local/lib/isolate/1/box/"+error), new File(sandboxDir, error));
+				}
+				destroySandbox();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -107,52 +123,42 @@ public class SandboxExecutor {
 	}
 
 	protected List<String> buildCommand() {
-		List<String> dockerCommand = getDockerCommand();
-		List<String> command = new ArrayList<>(dockerCommand.size() + 5);
-		command.addAll(dockerCommand);
-		command.add(String.join(" ", userCommand));
-		command.add(String.valueOf(timeoutInSeconds));
-		command.add(String.valueOf(memoryInMB * 1024));
-		command.add(input);
-		command.add(output);
-		command.add(error);
-		return command;
+		List<String> isolateCommand = getIsolateCommand();
+		return isolateCommand;
 	}
 
-	public String printCommand() {
-		StringBuilder result = new StringBuilder(String.join(" ", getDockerCommand()));
-		result.append(" ").append("\"" + String.join(" ", userCommand) +"\"");
-		result.append(" ").append(String.valueOf(timeoutInSeconds));
-		result.append(" ").append(String.valueOf(memoryInMB * 1024));
-		result.append(" ").append(input);
-		result.append(" ").append(output);
-		result.append(" ").append(error);
-		return result.toString();
-	}
-
-	
-	protected List<String> getDockerCommand() {
-		List<String> dockerCommand = new ArrayList<>();
-		dockerCommand.add("docker");
-		dockerCommand.add("run");
+	protected List<String> getIsolateCommand() {
+		List<String> isolateCommand = new ArrayList<>();
+		isolateCommand.add("isolate");
+		isolateCommand.add("--run");
 		if (containerName != null) {
-			dockerCommand.add("--name");
-			dockerCommand.add(containerName);
+			isolateCommand.add("-b");
+			isolateCommand.add(containerName);
 		}
-		dockerCommand.add("--volume");
-		dockerCommand.add(sandboxDir + ":/shared/");
-		dockerCommand.add("--cpus");
-		dockerCommand.add("0.8");
-		dockerCommand.add("--memory");
-		dockerCommand.add((memoryInMB+10) + "M");
-		dockerCommand.add("--memory-swap");
-		dockerCommand.add((memoryInMB+10) + "M");
-		dockerCommand.add("--network");
-		dockerCommand.add("none");
-		dockerCommand.add("--rm");
-		dockerCommand.add("pppepito86/judge");
-		dockerCommand.add("/scripts/sandbox.sh");		
-		return dockerCommand;
+		isolateCommand.add("-d");
+		isolateCommand.add("/shared="+sandboxDir);
+		isolateCommand.add("-M");
+		isolateCommand.add(new File(sandboxDir, "metadata").getAbsolutePath());
+		isolateCommand.add("-m");
+		isolateCommand.add(String.valueOf(256 * memoryInMB));
+		isolateCommand.add("-t");
+		isolateCommand.add(String.valueOf(timeoutInSeconds));
+		isolateCommand.add("-w");
+		isolateCommand.add(String.valueOf(2*timeoutInSeconds+1));
+		isolateCommand.add("-i");
+		isolateCommand.add("/shared/" + input);
+		isolateCommand.add("-o");
+		isolateCommand.add(output);
+		isolateCommand.add("-r");
+		isolateCommand.add(error);
+		isolateCommand.add("--");
+		isolateCommand.addAll(userCommand);
+		return isolateCommand;
+	}
+	
+	@Override
+	public String toString() {
+		return String.join(" ", getIsolateCommand());
 	}
 	
 }

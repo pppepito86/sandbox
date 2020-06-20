@@ -1,6 +1,5 @@
 package org.pesho.sandbox;
 
-import static org.pesho.sandbox.CommandStatus.OOM;
 import static org.pesho.sandbox.CommandStatus.PROGRAM_ERROR;
 import static org.pesho.sandbox.CommandStatus.SUCCESS;
 import static org.pesho.sandbox.CommandStatus.SYSTEM_ERROR;
@@ -8,6 +7,9 @@ import static org.pesho.sandbox.CommandStatus.TIMEOUT;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.zeroturnaround.exec.ProcessOutput;
@@ -18,20 +20,20 @@ public class SandboxResult {
 	protected final ProcessResult processResult;
 	protected final File outputDir;
 	protected final CommandResult commandResult;
-	protected final Double time;
+	protected final Map<String, Object> metadata;
 
 	public SandboxResult(ProcessResult processResult, File outputDir, double timeout, File errorFile) {
 		this.processResult = processResult;
 		this.outputDir = outputDir;
-		this.time = parseTime();
 		this.commandResult = parseResult(timeout, errorFile);
+		this.metadata = getMetadata();
 	}
 
 	public SandboxResult(Exception e) {
 		this.commandResult = new CommandResult(SYSTEM_ERROR, e.getMessage());
 		this.processResult = null;
 		this.outputDir = null;
-		this.time = null;
+		this.metadata = getMetadata();
 	}
 
 	public ProcessOutput getOutput() {
@@ -47,37 +49,35 @@ public class SandboxResult {
 	}
 	
 	public Double getTime() {
-		return time;
-//		Double timeToReturn = time;
-//		if (timeToReturn == null || timeToReturn < 0.01) timeToReturn = 0.01;
-//		timeToReturn = Math.round(timeToReturn * 100)/100.0;
-//		return timeToReturn;
+		return (Double) metadata.get("time");
+	}
+
+	public Integer getExitcode() {
+		return (Integer) metadata.get("exitcode");
 	}
 	
 	protected CommandResult parseResult(double timeout, File errorFile) {
-		if (processResult.getExitValue() == 127)
-			return new CommandResult(SYSTEM_ERROR, "sandbox.sh not found");
-		else if (processResult.getExitValue() != 0)
-			return new CommandResult(SYSTEM_ERROR,
-					"docker failed with exitcode (" + processResult.getExitValue() + ")");
+		if (processResult.getExitValue() == 127) return new CommandResult(SYSTEM_ERROR, "sandbox.sh not found");
+		else if (processResult.getExitValue() != 0)return new CommandResult(SYSTEM_ERROR, "docker failed with exitcode (" + processResult.getExitValue() + ")");
 
 		try {
-			File exitCodeFile = new File(outputDir, "exitcode");
-			if (exitCodeFile.exists()) {
-				int exitCode = Integer.valueOf(FileUtils.readFileToString(exitCodeFile).trim());
-				if (exitCode == 0)
-					return new CommandResult(SUCCESS, null, getTime());
-				// TODO check program exists
-				if (exitCode == 137 && getTime() >= timeout)
-					return new CommandResult(TIMEOUT, null, getTime());
-				if (exitCode == 137 && getTime() <= timeout)
-					return new CommandResult(OOM, null, getTime());
+		    // Timeout: returning the error to the user.
+			if ("TO".equals(metadata.get("status"))) {
+				return new CommandResult(TIMEOUT);
+			}
+			// Suicide with signal (memory limit, segfault, abort): returning the error to the user.
+			if ("SG".equals(metadata.get("status"))) {
 				return new CommandResult(PROGRAM_ERROR, readError(errorFile), getTime());
 			}
-
-			return new CommandResult(SYSTEM_ERROR, "result files do not exist");
+			// Sandbox error: this isn't a user error, the administrator needs to check the environment.
+			if ("XX".equals(metadata.get("status"))) {
+				return new CommandResult(SYSTEM_ERROR);
+			}
+			if (getExitcode() != 0) {
+				return new CommandResult(PROGRAM_ERROR, readError(errorFile), getTime());
+			}
+			return new CommandResult(SUCCESS, readError(errorFile), getTime());
 		} catch (Exception e) {
-			// TODO log e.printStackTrace();
 			return new CommandResult(SYSTEM_ERROR, e.getMessage());
 		}
 	}
@@ -86,18 +86,26 @@ public class SandboxResult {
 		return FileUtils.readFileToString(errorFile);
 	}
 
-	protected Double parseTime() {
-		File timeFile = new File(outputDir, "time");
-		if (!timeFile.exists())
-			return null;
+	protected Map<String, Object> getMetadata() {
+		Map<String, Object> map = new HashMap<>();
+		File metadataFile = new File(outputDir, "metadata");
+		if (!metadataFile.exists()) return map;
 
 		try {
-			String timeAsString = FileUtils.readFileToString(timeFile).trim();
-			return Double.valueOf(timeAsString);
-		} catch (Exception e) {
-			// TODO log e
-			return null;
+			((List<String>) FileUtils.readLines(metadataFile)).stream().forEach(line -> {
+				if (line.contains(":")) {
+					String[] split = line.split(":");
+					if ("time".equals(split[0])) map.put("time", Double.valueOf(split[1].trim()));
+					if ("time-wall".equals(split[0])) map.put("time-wall", Double.valueOf(split[1].trim()));
+					if ("max-rss".equals(split[0])) map.put("max-rss", Integer.valueOf(split[1].trim()));
+					if ("exitcode".equals(split[0])) map.put("exitcode", Integer.valueOf(split[1].trim()));
+					if ("status".equals(split[0])) map.put("status", Integer.valueOf(split[1].trim()));
+				}
+			});
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
+		return map;
 	}
 
 }
