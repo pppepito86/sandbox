@@ -26,6 +26,7 @@ public class SandboxResult {
 		this.processResult = processResult;
 		this.outputDir = outputDir;
 		this.metadata = getMetadata();
+		System.out.println(metadata);
 		this.commandResult = parseResult(timeout, errorFile);
 	}
 
@@ -79,7 +80,7 @@ public class SandboxResult {
 				return new CommandResult(SYSTEM_ERROR);
 			}
 			if (getExitcode() != 0) {
-				return new CommandResult(PROGRAM_ERROR, readError(errorFile), exitCode, getTime(), getMemory());
+				return new CommandResult(PROGRAM_ERROR, (String) metadata.get("message"), exitCode, getTime(), getMemory());
 			}
 			return new CommandResult(SUCCESS, readError(errorFile), exitCode, getTime(), getMemory());
 		} catch (Exception e) {
@@ -107,6 +108,7 @@ public class SandboxResult {
 					if ("max-rss".equals(split[0])) map.put("max-rss", Long.valueOf(split[1].trim()));
 					if ("exitcode".equals(split[0])) map.put("exitcode", Integer.valueOf(split[1].trim()));
 					if ("status".equals(split[0])) map.put("status", split[1].trim());
+					if ("message".equals(split[0])) map.put("message", split[1].trim());
 				}
 			});
 		} catch (IOException e) {
