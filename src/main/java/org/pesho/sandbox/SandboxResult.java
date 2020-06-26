@@ -64,6 +64,7 @@ public class SandboxResult {
 //		if (processResult.getExitValue() == 127) return new CommandResult(SYSTEM_ERROR, "sandbox.sh not found");
 //		else if (processResult.getExitValue() != 0) return new CommandResult(SYSTEM_ERROR, "docker failed with exitcode (" + processResult.getExitValue() + ")");
 
+		Integer exitCode = getExitcode();
 		try {
 		    // Timeout: returning the error to the user.
 			if ("TO".equals(metadata.get("status"))) {
@@ -71,16 +72,16 @@ public class SandboxResult {
 			}
 			// Suicide with signal (memory limit, segfault, abort): returning the error to the user.
 			if ("SG".equals(metadata.get("status"))) {
-				return new CommandResult(PROGRAM_ERROR, readError(errorFile), getTime(), getMemory());
+				return new CommandResult(PROGRAM_ERROR, readError(errorFile), exitCode, getTime(), getMemory());
 			}
 			// Sandbox error: this isn't a user error, the administrator needs to check the environment.
 			if ("XX".equals(metadata.get("status"))) {
 				return new CommandResult(SYSTEM_ERROR);
 			}
 			if (getExitcode() != 0) {
-				return new CommandResult(PROGRAM_ERROR, readError(errorFile), getTime(), getMemory());
+				return new CommandResult(PROGRAM_ERROR, readError(errorFile), exitCode, getTime(), getMemory());
 			}
-			return new CommandResult(SUCCESS, readError(errorFile), getTime(), getMemory());
+			return new CommandResult(SUCCESS, readError(errorFile), exitCode, getTime(), getMemory());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new CommandResult(SYSTEM_ERROR, e.getMessage());
