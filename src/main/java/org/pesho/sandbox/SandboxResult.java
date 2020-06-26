@@ -73,7 +73,7 @@ public class SandboxResult {
 			}
 			// Suicide with signal (memory limit, segfault, abort): returning the error to the user.
 			if ("SG".equals(metadata.get("status"))) {
-				return new CommandResult(PROGRAM_ERROR, readError(errorFile), exitCode, getTime(), getMemory());
+				return new CommandResult(PROGRAM_ERROR, (String) metadata.get("message"), exitCode, getTime(), getMemory());
 			}
 			// Sandbox error: this isn't a user error, the administrator needs to check the environment.
 			if ("XX".equals(metadata.get("status"))) {
