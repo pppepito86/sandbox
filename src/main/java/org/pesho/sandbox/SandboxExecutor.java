@@ -28,6 +28,8 @@ public class SandboxExecutor {
 	protected String error = "error";
 	protected boolean clean = false;
 	protected String containerName = null;
+	protected boolean allowProcesses = false;
+	protected boolean showError = false;
 	
 	public SandboxExecutor directory(File directory) {
 		sandboxDir = directory.getAbsoluteFile();
@@ -68,6 +70,16 @@ public class SandboxExecutor {
 		return this;
 	}
 
+	public SandboxExecutor allowProcesses() {
+		this.allowProcesses = true;
+		return this;
+	}
+	
+	public SandboxExecutor showError() {
+		this.showError = true;
+		return this;
+	}
+	
 	public SandboxExecutor clean(boolean clean) {
 		this.clean = clean;
 		return this;
@@ -103,8 +115,11 @@ public class SandboxExecutor {
 				System.out.println("file: " + file.getAbsolutePath());
 				FileUtils.copyFile(file, new File(sandboxDir, file.getName()));
 			}
-			SandboxResult sandboxResult = new SandboxResult(processResult, sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
-			return sandboxResult;
+			if (showError) {
+				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
+			} else {
+				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, null);
+			}
 		} catch (TimeoutException e) {
 			return new SandboxResult(e);
 		} catch (Exception e) {
@@ -141,7 +156,7 @@ public class SandboxExecutor {
 			isolateCommand.add(containerName);
 		}
 		isolateCommand.add("-e");
-		isolateCommand.add("-p");
+		if (allowProcesses) isolateCommand.add("-p");
 		isolateCommand.add("-d");
 		isolateCommand.add("/etc");
 		isolateCommand.add("-d");

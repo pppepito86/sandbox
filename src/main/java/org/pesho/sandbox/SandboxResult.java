@@ -61,6 +61,11 @@ public class SandboxResult {
 		return (Integer) metadata.get("exitcode");
 	}
 	
+	public String getError(File errorFile) throws IOException {
+		if (errorFile != null && errorFile.exists()) return readError(errorFile);
+		return (String) metadata.get("message");
+	}
+	
 	protected CommandResult parseResult(double timeout, File errorFile) {
 //		if (processResult.getExitValue() == 127) return new CommandResult(SYSTEM_ERROR, "sandbox.sh not found");
 //		else if (processResult.getExitValue() != 0) return new CommandResult(SYSTEM_ERROR, "docker failed with exitcode (" + processResult.getExitValue() + ")");
@@ -73,16 +78,16 @@ public class SandboxResult {
 			}
 			// Suicide with signal (memory limit, segfault, abort): returning the error to the user.
 			if ("SG".equals(metadata.get("status"))) {
-				return new CommandResult(PROGRAM_ERROR, (String) metadata.get("message"), exitCode, getTime(), getMemory());
+				return new CommandResult(PROGRAM_ERROR, getError(errorFile), exitCode, getTime(), getMemory());
 			}
 			// Sandbox error: this isn't a user error, the administrator needs to check the environment.
 			if ("XX".equals(metadata.get("status"))) {
 				return new CommandResult(SYSTEM_ERROR);
 			}
 			if (getExitcode() != 0) {
-				return new CommandResult(PROGRAM_ERROR, (String) metadata.get("message"), exitCode, getTime(), getMemory());
+				return new CommandResult(PROGRAM_ERROR, getError(errorFile), exitCode, getTime(), getMemory());
 			}
-			return new CommandResult(SUCCESS, readError(errorFile), exitCode, getTime(), getMemory());
+			return new CommandResult(SUCCESS, getError(errorFile), exitCode, getTime(), getMemory());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new CommandResult(SYSTEM_ERROR, e.getMessage());
