@@ -22,7 +22,7 @@ public class SandboxExecutor {
 	protected List<String> userCommand = new ArrayList<>();
 	protected double timeoutInSeconds = 5.0;
 	protected double extraTimeoutInSeconds = 1.0;
-	protected int memoryInMB = 256;
+	protected Integer memoryInMB = 256;
 	protected String input = null;
 	protected String output = "output";
 	protected String error = "error";
@@ -163,8 +163,10 @@ public class SandboxExecutor {
 		isolateCommand.add("/shared="+sandboxDir);
 		isolateCommand.add("-M");
 		isolateCommand.add(new File(sandboxDir, "metadata").getAbsolutePath());
-		isolateCommand.add("-m");
-		isolateCommand.add(String.valueOf(1024 * memoryInMB));
+		if (memoryInMB != null) {
+			isolateCommand.add("-m");
+			isolateCommand.add(String.valueOf(1024 * memoryInMB));
+		}
 		isolateCommand.add("-t");
 		isolateCommand.add(String.valueOf(timeoutInSeconds));
 		isolateCommand.add("-w");
