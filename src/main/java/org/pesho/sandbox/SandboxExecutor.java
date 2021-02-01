@@ -50,7 +50,7 @@ public class SandboxExecutor {
 		return this;
 	}
 	
-	public SandboxExecutor memory(int memory) {
+	public SandboxExecutor memory(Integer memory) {
 		memoryInMB = memory;
 		return this;
 	}
