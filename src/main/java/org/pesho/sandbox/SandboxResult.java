@@ -118,7 +118,7 @@ public class SandboxResult {
 					if ("time-wall".equals(split[0])) map.put("time-wall", Double.valueOf(split[1].trim()));
 					if ("max-rss".equals(split[0])) {
 						long maxRss = Long.valueOf(split[1].trim());
-						maxRss = Math.max(maxRss - 1200, 0);
+						maxRss = Math.max(maxRss - 1400, 0);
 						map.put("max-rss", maxRss);
 					}
 					if ("exitcode".equals(split[0])) map.put("exitcode", Integer.valueOf(split[1].trim()));
