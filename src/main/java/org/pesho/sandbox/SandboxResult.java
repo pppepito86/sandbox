@@ -4,6 +4,7 @@ import static org.pesho.sandbox.CommandStatus.PROGRAM_ERROR;
 import static org.pesho.sandbox.CommandStatus.SUCCESS;
 import static org.pesho.sandbox.CommandStatus.SYSTEM_ERROR;
 import static org.pesho.sandbox.CommandStatus.TIMEOUT;
+import static org.pesho.sandbox.CommandStatus.OOM;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,12 +23,12 @@ public class SandboxResult {
 	protected final CommandResult commandResult;
 	protected final Map<String, Object> metadata;
 
-	public SandboxResult(ProcessResult processResult, File outputDir, double timeout, File errorFile) {
+	public SandboxResult(ProcessResult processResult, File outputDir, double timeout, int memory, File errorFile) {
 		this.processResult = processResult;
 		this.outputDir = outputDir;
 		this.metadata = getMetadata();
 		System.out.println(metadata);
-		this.commandResult = parseResult(timeout, errorFile);
+		this.commandResult = parseResult(timeout, memory, errorFile);
 	}
 
 	public SandboxResult(Exception e) {
@@ -66,12 +67,17 @@ public class SandboxResult {
 		return (String) metadata.get("message");
 	}
 	
-	protected CommandResult parseResult(double timeout, File errorFile) {
+	protected CommandResult parseResult(double timeout, int memory, File errorFile) {
 //		if (processResult.getExitValue() == 127) return new CommandResult(SYSTEM_ERROR, "sandbox.sh not found");
 //		else if (processResult.getExitValue() != 0) return new CommandResult(SYSTEM_ERROR, "docker failed with exitcode (" + processResult.getExitValue() + ")");
 
 		Integer exitCode = getExitcode();
 		try {
+			// OOM
+			if (metadata.get("max-rss") != null && (Long) metadata.get("max-rss") > memory*1024) {
+				return new CommandResult(OOM);
+			}
+			
 		    // Timeout: returning the error to the user.
 			if ("TO".equals(metadata.get("status"))) {
 				return new CommandResult(TIMEOUT);
@@ -110,7 +116,11 @@ public class SandboxResult {
 					String[] split = line.split(":");
 					if ("time".equals(split[0])) map.put("time", Double.valueOf(split[1].trim()));
 					if ("time-wall".equals(split[0])) map.put("time-wall", Double.valueOf(split[1].trim()));
-					if ("max-rss".equals(split[0])) map.put("max-rss", Long.valueOf(split[1].trim()));
+					if ("max-rss".equals(split[0])) {
+						long maxRss = Long.valueOf(split[1].trim());
+						maxRss = Math.max(maxRss - 1200, 0);
+						map.put("max-rss", maxRss);
+					}
 					if ("exitcode".equals(split[0])) map.put("exitcode", Integer.valueOf(split[1].trim()));
 					if ("status".equals(split[0])) map.put("status", split[1].trim());
 					if ("message".equals(split[0])) map.put("message", split[1].trim());

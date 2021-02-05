@@ -116,9 +116,9 @@ public class SandboxExecutor {
 				FileUtils.copyFile(file, new File(sandboxDir, file.getName()));
 			}
 			if (showError) {
-				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, new File(sandboxDir, error));
+				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, new File(sandboxDir, error));
 			} else {
-				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, null);
+				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, null);
 			}
 		} catch (TimeoutException e) {
 			return new SandboxResult(e);
@@ -165,7 +165,7 @@ public class SandboxExecutor {
 		isolateCommand.add(new File(sandboxDir, "metadata").getAbsolutePath());
 		if (memoryInMB != null) {
 			isolateCommand.add("-m");
-			isolateCommand.add(String.valueOf(1024 * memoryInMB));
+			isolateCommand.add(String.valueOf(1024 * (memoryInMB+8)));
 		}
 		isolateCommand.add("-t");
 		isolateCommand.add(String.valueOf(timeoutInSeconds));
