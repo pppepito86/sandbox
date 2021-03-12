@@ -73,26 +73,26 @@ public class SandboxResult {
 
 		Integer exitCode = getExitcode();
 		try {
-			// OOM
-			if (metadata.get("max-rss") != null && (Long) metadata.get("max-rss") > memory*1024) {
-				return new CommandResult(OOM);
+			// Sandbox error: this isn't a user error, the administrator needs to check the environment.
+			if ("XX".equals(metadata.get("status"))) {
+				return new CommandResult(SYSTEM_ERROR);
 			}
-			
 		    // Timeout: returning the error to the user.
 			if ("TO".equals(metadata.get("status"))) {
 				return new CommandResult(TIMEOUT);
+			}
+			// OOM
+			if (metadata.get("max-rss") != null && (Long) metadata.get("max-rss") > memory*1024) {
+				return new CommandResult(OOM);
 			}
 			// Suicide with signal (memory limit, segfault, abort): returning the error to the user.
 			if ("SG".equals(metadata.get("status"))) {
 				return new CommandResult(PROGRAM_ERROR, getError(errorFile), exitCode, getTime(), getMemory());
 			}
-			// Sandbox error: this isn't a user error, the administrator needs to check the environment.
-			if ("XX".equals(metadata.get("status"))) {
-				return new CommandResult(SYSTEM_ERROR);
-			}
 			if (getExitcode() != 0) {
 				return new CommandResult(PROGRAM_ERROR, getError(errorFile), exitCode, getTime(), getMemory());
 			}
+			
 			return new CommandResult(SUCCESS, getError(errorFile), exitCode, getTime(), getMemory());
 		} catch (Exception e) {
 			e.printStackTrace();
