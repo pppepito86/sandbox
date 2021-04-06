@@ -85,18 +85,18 @@ public class SandboxResult {
 			if ("TO".equals(metadata.get("status"))) {
 				String error = getError(errorFile);
 				if (error != null && error.contains("wall clock")) {
-					return new CommandResult(TIMEOUT, "Wall clock timeout", exitCode, Precision.round(-getTime(), 3), memoryToShow);
+					return new CommandResult(TIMEOUT, Messages.WALL_CLOCK_TIMEOUT, exitCode, Precision.round(-getTime(), 3), memoryToShow);
 				}
 				double extraTime = Precision.round(timeout+Math.min(timeout/2, 0.5), 3);
 				if (getTime() >= extraTime) {
-					return new CommandResult(TIMEOUT, "Time limit exceeded", exitCode, -extraTime, memoryToShow);
+					return new CommandResult(TIMEOUT, Messages.EXTRA_TIME_LIMIT_EXCEEDED, exitCode, -extraTime, memoryToShow);
 				}
 				
-				return new CommandResult(TIMEOUT, "Time limit exceeded", exitCode, getTime(), memoryToShow);
+				return new CommandResult(TIMEOUT, Messages.TIME_LIMIT_EXCEEDED, exitCode, getTime(), memoryToShow);
 			}
 			// OOM
 			if (getMemory() >= memory*1024) {
-				return new CommandResult(OOM, "Memory limit exceeded", exitCode, getTime(), memoryToShow);
+				return new CommandResult(OOM, Messages.MEMORY_LIMIT_EXCEEDED, exitCode, getTime(), memoryToShow);
 			}
 			// Suicide with signal (memory limit, segfault, abort): returning the error to the user.
 			if ("SG".equals(metadata.get("status"))) {
