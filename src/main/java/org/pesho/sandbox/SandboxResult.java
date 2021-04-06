@@ -85,11 +85,11 @@ public class SandboxResult {
 			if ("TO".equals(metadata.get("status"))) {
 				String error = getError(errorFile);
 				if (error != null && error.contains("wall clock")) {
-					return new CommandResult(TIMEOUT, "Wall clock timeout", exitCode, null, memoryToShow);
+					return new CommandResult(TIMEOUT, "Wall clock timeout", exitCode, Precision.round(-getTime(), 3), memoryToShow);
 				}
 				double extraTime = Precision.round(timeout+Math.min(timeout/2, 0.5), 3);
 				if (getTime() >= extraTime) {
-					return new CommandResult(TIMEOUT, "Extra time limit exceeded", exitCode, -extraTime, memoryToShow);
+					return new CommandResult(TIMEOUT, "Time limit exceeded", exitCode, -extraTime, memoryToShow);
 				}
 				
 				return new CommandResult(TIMEOUT, "Time limit exceeded", exitCode, getTime(), memoryToShow);
