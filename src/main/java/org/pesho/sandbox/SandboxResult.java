@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.math3.util.Precision;
 import org.zeroturnaround.exec.ProcessOutput;
 import org.zeroturnaround.exec.ProcessResult;
 
@@ -86,7 +87,7 @@ public class SandboxResult {
 				if (error != null && error.contains("wall clock")) {
 					return new CommandResult(TIMEOUT, "Wall clock timeout", exitCode, null, memoryToShow);
 				}
-				double extraTime = timeout+Math.min(timeout/2, 0.5);
+				double extraTime = Precision.round(timeout+Math.min(timeout/2, 0.5), 3);
 				if (getTime() >= extraTime) {
 					return new CommandResult(TIMEOUT, "Extra time limit exceeded", exitCode, -extraTime, memoryToShow);
 				}
