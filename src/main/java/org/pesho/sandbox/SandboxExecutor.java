@@ -28,7 +28,7 @@ public class SandboxExecutor {
 	protected String error = "error";
 	protected boolean clean = false;
 	protected String containerName = null;
-	protected boolean allowProcesses = false;
+	protected boolean trusted = false;
 	protected boolean showError = false;
 	
 	public SandboxExecutor directory(File directory) {
@@ -70,8 +70,8 @@ public class SandboxExecutor {
 		return this;
 	}
 
-	public SandboxExecutor allowProcesses() {
-		this.allowProcesses = true;
+	public SandboxExecutor trusted(boolean trusted) {
+		this.trusted = trusted;
 		return this;
 	}
 	
@@ -91,30 +91,32 @@ public class SandboxExecutor {
 	}
 	
 	public void createSandbox() throws Exception {
-		new ProcessExecutor().command("isolate", "--init").execute();
+		new ProcessExecutor().command("isolate", "--box-id=0", "--cg", "--init").execute();
 	}
 	
 	public void destroySandbox() throws Exception {
-		new ProcessExecutor().command("isolate", "--cleanup").execute();
+		new ProcessExecutor().command("isolate", "--box-id=0", "--cg", "--cleanup").execute();
 	}
 	
 	public SandboxResult execute() {
 		try {
 			createSandbox();
 			if (!sandboxDir.exists()) sandboxDir.mkdirs();
+			new ProcessExecutor("chmod", "-R", "777", sandboxDir.getAbsolutePath()).execute();
 			System.out.println("sandbox dir: " + sandboxDir.getAbsolutePath());
 
 			processExecutor.command(buildCommand());
+//			processExecutor.directory(sandboxDir);
 			long hardTimeout = Math.round((2*timeoutInSeconds+1+extraTimeoutInSeconds)*1000);
 			processExecutor.timeout(hardTimeout, TimeUnit.MILLISECONDS);
 			
 			System.out.println("command: " + this);
 			ProcessResult processResult = processExecutor.execute();
 			
-			for (File file: new File("/var/local/lib/isolate/0/box").listFiles()) {
-				System.out.println("file: " + file.getAbsolutePath());
-				FileUtils.copyFile(file, new File(sandboxDir, file.getName()));
-			}
+//			for (File file: new File("/var/local/lib/isolate/0/box").listFiles()) {
+//				System.out.println("file: " + file.getAbsolutePath());
+//				FileUtils.copyFile(file, new File(sandboxDir, file.getName()));
+//			}
 			if (showError) {
 				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, new File(sandboxDir, error));
 			} else {
@@ -150,35 +152,45 @@ public class SandboxExecutor {
 	protected List<String> getIsolateCommand() {
 		List<String> isolateCommand = new ArrayList<>();
 		isolateCommand.add("isolate");
+		
+		isolateCommand.add("--box-id=0");
+		
+		isolateCommand.add("--cg");
+		isolateCommand.add("--cg-timing");
+		
+		isolateCommand.add("--chdir=/tmp");
+		
+		isolateCommand.add("--dir=/tmp="+sandboxDir+":rw");
+		
+		if (input != null) {
+			isolateCommand.add("--stdin=/tmp/"+input);
+		}
+		isolateCommand.add("--stdout=/tmp/"+output);
+		isolateCommand.add("--stderr=/tmp/"+error);
+		
+		isolateCommand.add("--meta="+new File(sandboxDir, "metadata").getAbsolutePath());
+		
+		isolateCommand.add("--fsize="+(1<<20));
+		isolateCommand.add("--processes="+(trusted?1000:1));
+		
+		if (trusted) {
+			isolateCommand.add("-e");
+		}
+		
+		isolateCommand.add("--time="+timeoutInSeconds);
+		isolateCommand.add("--wall-time="+(2*timeoutInSeconds+1));
+		
+		if (memoryInMB != null) {
+			isolateCommand.add("--cg-mem="+(1024 * (memoryInMB+8)));
+		}
+		
 		isolateCommand.add("--run");
+		
 		if (containerName != null) {
 			isolateCommand.add("-b");
 			isolateCommand.add(containerName);
 		}
-		isolateCommand.add("-e");
-		if (allowProcesses) isolateCommand.add("-p");
-		isolateCommand.add("-d");
-		isolateCommand.add("/etc");
-		isolateCommand.add("-d");
-		isolateCommand.add("/shared="+sandboxDir);
-		isolateCommand.add("-M");
-		isolateCommand.add(new File(sandboxDir, "metadata").getAbsolutePath());
-		if (memoryInMB != null) {
-			isolateCommand.add("-m");
-			isolateCommand.add(String.valueOf(1024 * (memoryInMB+8)));
-		}
-		isolateCommand.add("-t");
-		isolateCommand.add(String.valueOf(timeoutInSeconds));
-		isolateCommand.add("-w");
-		isolateCommand.add(String.valueOf(2*timeoutInSeconds+1));
-		if (input != null) {
-			isolateCommand.add("-i");
-			isolateCommand.add("/shared/" + input);
-		}
-		isolateCommand.add("-o");
-		isolateCommand.add(output);
-		isolateCommand.add("-r");
-		isolateCommand.add(error);
+		
 		isolateCommand.add("--");
 		isolateCommand.addAll(userCommand);
 		return isolateCommand;

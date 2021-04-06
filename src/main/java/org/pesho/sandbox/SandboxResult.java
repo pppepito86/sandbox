@@ -55,7 +55,7 @@ public class SandboxResult {
 	}
 
 	public Long getMemory() {
-		return (Long) metadata.get("max-rss");
+		return (Long) metadata.get("cg-mem");
 	}
 
 	public Integer getExitcode() {
@@ -82,7 +82,7 @@ public class SandboxResult {
 				return new CommandResult(TIMEOUT);
 			}
 			// OOM
-			if (metadata.get("max-rss") != null && (Long) metadata.get("max-rss") > memory*1024) {
+			if (metadata.get("cg-mem") != null && (Long) metadata.get("cg-mem") > memory*1024) {
 				return new CommandResult(OOM);
 			}
 			// Suicide with signal (memory limit, segfault, abort): returning the error to the user.
@@ -116,10 +116,10 @@ public class SandboxResult {
 					String[] split = line.split(":");
 					if ("time".equals(split[0])) map.put("time", Double.valueOf(split[1].trim()));
 					if ("time-wall".equals(split[0])) map.put("time-wall", Double.valueOf(split[1].trim()));
-					if ("max-rss".equals(split[0])) {
+					if ("cg-mem".equals(split[0])) {
 						long maxRss = Long.valueOf(split[1].trim());
 						maxRss = Math.max(maxRss - 1400, 0);
-						map.put("max-rss", maxRss);
+						map.put("cg-mem", maxRss);
 					}
 					if ("exitcode".equals(split[0])) map.put("exitcode", Integer.valueOf(split[1].trim()));
 					if ("status".equals(split[0])) map.put("status", split[1].trim());
