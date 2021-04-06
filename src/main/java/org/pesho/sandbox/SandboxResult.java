@@ -79,11 +79,22 @@ public class SandboxResult {
 			}
 		    // Timeout: returning the error to the user.
 			if ("TO".equals(metadata.get("status"))) {
-				return new CommandResult(TIMEOUT);
+				String error = getError(errorFile);
+				if (error != null && error.contains("wall clock")) {
+					return new CommandResult(TIMEOUT, "Wall clock timeout", exitCode, null, getMemory());
+				}
+				if (getTime() >= timeout+Math.min(timeout/2, 0.5)) {
+					return new CommandResult(TIMEOUT, "CPU clock timeout", exitCode, -getTime(), getMemory());
+				}
+				
+				return new CommandResult(TIMEOUT, null, exitCode, getTime(), getMemory());
 			}
 			// OOM
-			if (metadata.get("cg-mem") != null && (Long) metadata.get("cg-mem") > memory*1024) {
-				return new CommandResult(OOM);
+			if (getMemory() > memory*1024) {
+				if (getMemory() > (memory+4)*1024) {
+					return new CommandResult(OOM, "Memory limit exceeded", exitCode, getTime(), -getMemory());
+				}
+				return new CommandResult(OOM, "Memory limit exceeded", exitCode, getTime(), getMemory());
 			}
 			// Suicide with signal (memory limit, segfault, abort): returning the error to the user.
 			if ("SG".equals(metadata.get("status"))) {
@@ -96,7 +107,7 @@ public class SandboxResult {
 			return new CommandResult(SUCCESS, getError(errorFile), exitCode, getTime(), getMemory());
 		} catch (Exception e) {
 			e.printStackTrace();
-			return new CommandResult(SYSTEM_ERROR, e.getMessage());
+			return new CommandResult(SYSTEM_ERROR, e.getMessage(), exitCode, getTime(), getMemory());
 		}
 	}
 
@@ -117,9 +128,8 @@ public class SandboxResult {
 					if ("time".equals(split[0])) map.put("time", Double.valueOf(split[1].trim()));
 					if ("time-wall".equals(split[0])) map.put("time-wall", Double.valueOf(split[1].trim()));
 					if ("cg-mem".equals(split[0])) {
-						long maxRss = Long.valueOf(split[1].trim());
-						maxRss = Math.max(maxRss - 1400, 0);
-						map.put("cg-mem", maxRss);
+						long maxMemory = Long.valueOf(split[1].trim());
+						map.put("cg-mem", maxMemory);
 					}
 					if ("exitcode".equals(split[0])) map.put("exitcode", Integer.valueOf(split[1].trim()));
 					if ("status".equals(split[0])) map.put("status", split[1].trim());

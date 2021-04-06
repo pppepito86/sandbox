@@ -20,6 +20,7 @@ public class SandboxExecutor {
 
 	protected File sandboxDir = new File(".").getAbsoluteFile();
 	protected List<String> userCommand = new ArrayList<>();
+	protected int boxId = 0;
 	protected double timeoutInSeconds = 5.0;
 	protected double extraTimeoutInSeconds = 1.0;
 	protected Integer memoryInMB = 256;
@@ -27,7 +28,6 @@ public class SandboxExecutor {
 	protected String output = "output";
 	protected String error = "error";
 	protected boolean clean = false;
-	protected String containerName = null;
 	protected boolean trusted = false;
 	protected boolean showError = false;
 	
@@ -85,17 +85,17 @@ public class SandboxExecutor {
 		return this;
 	}
 	
-	public SandboxExecutor name(String containerName) {
-		this.containerName = containerName;
+	public SandboxExecutor name(int boxId) {
+		this.boxId = boxId;
 		return this;
 	}
 	
 	public void createSandbox() throws Exception {
-		new ProcessExecutor().command("isolate", "--box-id=0", "--cg", "--init").execute();
+		new ProcessExecutor().command("isolate", "--box-id="+boxId, "--cg", "--init").execute();
 	}
 	
 	public void destroySandbox() throws Exception {
-		new ProcessExecutor().command("isolate", "--box-id=0", "--cg", "--cleanup").execute();
+		new ProcessExecutor().command("isolate", "--box-id="+boxId, "--cg", "--cleanup").execute();
 	}
 	
 	public SandboxResult execute() {
@@ -153,7 +153,7 @@ public class SandboxExecutor {
 		List<String> isolateCommand = new ArrayList<>();
 		isolateCommand.add("isolate");
 		
-		isolateCommand.add("--box-id=0");
+		isolateCommand.add("--box-id="+boxId);
 		
 		isolateCommand.add("--cg");
 		isolateCommand.add("--cg-timing");
@@ -179,17 +179,13 @@ public class SandboxExecutor {
 		
 		isolateCommand.add("--time="+timeoutInSeconds);
 		isolateCommand.add("--wall-time="+(2*timeoutInSeconds+1));
-		
+		isolateCommand.add("--extra-time="+Math.min(timeoutInSeconds/2, 0.5));
+
 		if (memoryInMB != null) {
-			isolateCommand.add("--cg-mem="+(1024 * (memoryInMB+8)));
+			isolateCommand.add("--cg-mem="+(1024 * (memoryInMB+5)));
 		}
 		
 		isolateCommand.add("--run");
-		
-		if (containerName != null) {
-			isolateCommand.add("-b");
-			isolateCommand.add(containerName);
-		}
 		
 		isolateCommand.add("--");
 		isolateCommand.addAll(userCommand);
