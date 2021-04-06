@@ -72,6 +72,9 @@ public class SandboxResult {
 //		else if (processResult.getExitValue() != 0) return new CommandResult(SYSTEM_ERROR, "docker failed with exitcode (" + processResult.getExitValue() + ")");
 
 		Integer exitCode = getExitcode();
+		Long memoryToShow = getMemory() == null ? null : (getMemory() >= (memory+4)*1024 ? -1024*(memory+4) : getMemory());
+		if (memoryToShow == null) System.out.println("No memory to show");
+		
 		try {
 			// Sandbox error: this isn't a user error, the administrator needs to check the environment.
 			if ("XX".equals(metadata.get("status"))) {
@@ -81,33 +84,31 @@ public class SandboxResult {
 			if ("TO".equals(metadata.get("status"))) {
 				String error = getError(errorFile);
 				if (error != null && error.contains("wall clock")) {
-					return new CommandResult(TIMEOUT, "Wall clock timeout", exitCode, null, getMemory());
+					return new CommandResult(TIMEOUT, "Wall clock timeout", exitCode, null, memoryToShow);
 				}
-				if (getTime() >= timeout+Math.min(timeout/2, 0.5)) {
-					return new CommandResult(TIMEOUT, "CPU clock timeout", exitCode, -getTime(), getMemory());
+				double extraTime = timeout+Math.min(timeout/2, 0.5);
+				if (getTime() >= extraTime) {
+					return new CommandResult(TIMEOUT, "Extra time limit exceeded", exitCode, -extraTime, memoryToShow);
 				}
 				
-				return new CommandResult(TIMEOUT, null, exitCode, getTime(), getMemory());
+				return new CommandResult(TIMEOUT, "Time limit exceeded", exitCode, getTime(), memoryToShow);
 			}
 			// OOM
-			if (getMemory() > memory*1024) {
-				if (getMemory() > (memory+4)*1024) {
-					return new CommandResult(OOM, "Memory limit exceeded", exitCode, getTime(), -getMemory());
-				}
-				return new CommandResult(OOM, "Memory limit exceeded", exitCode, getTime(), getMemory());
+			if (getMemory() >= memory*1024) {
+				return new CommandResult(OOM, "Memory limit exceeded", exitCode, getTime(), memoryToShow);
 			}
 			// Suicide with signal (memory limit, segfault, abort): returning the error to the user.
 			if ("SG".equals(metadata.get("status"))) {
-				return new CommandResult(PROGRAM_ERROR, getError(errorFile), exitCode, getTime(), getMemory());
+				return new CommandResult(PROGRAM_ERROR, getError(errorFile), exitCode, getTime(), memoryToShow);
 			}
 			if (getExitcode() != 0) {
-				return new CommandResult(PROGRAM_ERROR, getError(errorFile), exitCode, getTime(), getMemory());
+				return new CommandResult(PROGRAM_ERROR, getError(errorFile), exitCode, getTime(), memoryToShow);
 			}
 			
-			return new CommandResult(SUCCESS, getError(errorFile), exitCode, getTime(), getMemory());
+			return new CommandResult(SUCCESS, getError(errorFile), exitCode, getTime(), memoryToShow);
 		} catch (Exception e) {
 			e.printStackTrace();
-			return new CommandResult(SYSTEM_ERROR, e.getMessage(), exitCode, getTime(), getMemory());
+			return new CommandResult(SYSTEM_ERROR, e.getMessage(), exitCode, getTime(), memoryToShow);
 		}
 	}
 
