@@ -152,7 +152,7 @@ public class SandboxResult {
 
 	protected Map<String, Object> getExtraMetadata(boolean hasExtraMetadata) {
 		Map<String, Object> map = new HashMap<>();
-		map.put("io-time", 0);
+		map.put("io-time", 0.0);
 		File metadataFile = new File(outputDir, "extra_metadata");
 		if (!hasExtraMetadata || !metadataFile.exists()) return map;
 
