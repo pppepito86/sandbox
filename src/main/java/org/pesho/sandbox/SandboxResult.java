@@ -24,10 +24,12 @@ public class SandboxResult {
 	protected final CommandResult commandResult;
 	protected final Map<String, Object> metadata;
 
-	public SandboxResult(ProcessResult processResult, File outputDir, double timeout, int memory, File errorFile) {
+	public SandboxResult(ProcessResult processResult, File outputDir, double timeout, int memory, File errorFile, boolean hasExtraMetadata) {
 		this.processResult = processResult;
 		this.outputDir = outputDir;
-		this.metadata = getMetadata();
+		this.metadata = new HashMap<>();
+		this.metadata.putAll(getMetadata());
+		this.metadata.putAll(getExtraMetadata(hasExtraMetadata));
 		System.out.println(metadata);
 		this.commandResult = parseResult(timeout, memory, errorFile);
 	}
@@ -52,7 +54,7 @@ public class SandboxResult {
 	}
 	
 	public Double getTime() {
-		return (Double) metadata.get("time");
+		return (double) metadata.get("time") - (double) metadata.get("io-time");
 	}
 
 	public Long getMemory() {
@@ -87,13 +89,17 @@ public class SandboxResult {
 				if (error != null && error.contains("wall clock")) {
 					return new CommandResult(TIMEOUT, Messages.WALL_CLOCK_TIMEOUT, exitCode, Precision.round(-getTime(), 3), memoryToShow);
 				}
-				double extraTime = Precision.round(timeout+Math.min(timeout/2, 0.5), 3);
-				if (getTime() >= extraTime) {
-					return new CommandResult(TIMEOUT, Messages.EXTRA_TIME_LIMIT_EXCEEDED, exitCode, -extraTime, memoryToShow);
-				}
-				
+			}
+
+			double extraTime = Precision.round(timeout+Math.min(timeout/2, 0.5), 3);
+			if (getTime() >= extraTime) {
+				return new CommandResult(TIMEOUT, Messages.EXTRA_TIME_LIMIT_EXCEEDED, exitCode, -extraTime, memoryToShow);
+			}
+
+			if (getTime() > timeout) {
 				return new CommandResult(TIMEOUT, Messages.TIME_LIMIT_EXCEEDED, exitCode, getTime(), memoryToShow);
 			}
+				
 			// OOM
 			if (getMemory() >= memory*1024) {
 				return new CommandResult(OOM, Messages.MEMORY_LIMIT_EXCEEDED, exitCode, getTime(), memoryToShow);
@@ -136,6 +142,25 @@ public class SandboxResult {
 					if ("exitcode".equals(split[0])) map.put("exitcode", Integer.valueOf(split[1].trim()));
 					if ("status".equals(split[0])) map.put("status", split[1].trim());
 					if ("message".equals(split[0])) map.put("message", split[1].trim());
+				}
+			});
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return map;
+	}
+
+	protected Map<String, Object> getExtraMetadata(boolean hasExtraMetadata) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("io-time", 0);
+		File metadataFile = new File(outputDir, "extra_metadata");
+		if (!hasExtraMetadata || !metadataFile.exists()) return map;
+
+		try {
+			((List<String>) FileUtils.readLines(metadataFile)).stream().forEach(line -> {
+				if (line.contains(":")) {
+					String[] split = line.split(":");
+					if ("io-time".equals(split[0])) map.put("io-time", Double.valueOf(split[1].trim()));
 				}
 			});
 		} catch (IOException e) {

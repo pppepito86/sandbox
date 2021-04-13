@@ -30,6 +30,7 @@ public class SandboxExecutor {
 	protected boolean clean = false;
 	protected boolean trusted = false;
 	protected boolean showError = false;
+	protected String extraMetadata = null;
 	
 	public SandboxExecutor directory(File directory) {
 		sandboxDir = directory.getAbsoluteFile();
@@ -67,6 +68,12 @@ public class SandboxExecutor {
 	
 	public SandboxExecutor error(String error) {
 		this.error = error;
+		return this;
+	}
+	
+	public SandboxExecutor useExtraMetadata(boolean use) {
+		if (use) this.extraMetadata = "extra_metadata";
+		else this.extraMetadata = null;
 		return this;
 	}
 
@@ -118,9 +125,9 @@ public class SandboxExecutor {
 //				FileUtils.copyFile(file, new File(sandboxDir, file.getName()));
 //			}
 			if (showError) {
-				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, new File(sandboxDir, error));
+				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, new File(sandboxDir, error), extraMetadata != null);
 			} else {
-				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, null);
+				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, null, extraMetadata != null);
 			}
 		} catch (TimeoutException e) {
 			return new SandboxResult(e);
@@ -177,8 +184,10 @@ public class SandboxExecutor {
 			isolateCommand.add("-e");
 		}
 		
-		isolateCommand.add("--time="+timeoutInSeconds);
-		isolateCommand.add("--wall-time="+(2*timeoutInSeconds+1));
+		double timeout = timeoutInSeconds;
+		if (extraMetadata != null) timeout += 1;
+		isolateCommand.add("--time="+timeout);
+		isolateCommand.add("--wall-time="+(2*timeout+1));
 		isolateCommand.add("--extra-time="+Math.min(timeoutInSeconds/2, 0.5));
 
 		if (memoryInMB != null) {
@@ -189,6 +198,8 @@ public class SandboxExecutor {
 		
 		isolateCommand.add("--");
 		isolateCommand.addAll(userCommand);
+		if (extraMetadata != null) isolateCommand.add(extraMetadata);
+		
 		return isolateCommand;
 	}
 	
