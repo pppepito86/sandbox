@@ -1,10 +1,10 @@
 package org.pesho.sandbox;
 
+import static org.pesho.sandbox.CommandStatus.OOM;
 import static org.pesho.sandbox.CommandStatus.PROGRAM_ERROR;
 import static org.pesho.sandbox.CommandStatus.SUCCESS;
 import static org.pesho.sandbox.CommandStatus.SYSTEM_ERROR;
 import static org.pesho.sandbox.CommandStatus.TIMEOUT;
-import static org.pesho.sandbox.CommandStatus.OOM;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +54,7 @@ public class SandboxResult {
 	}
 	
 	public Double getTime() {
-		return (double) metadata.get("time") - (double) metadata.get("io-time");
+		return Precision.round((double) metadata.get("time") - (double) metadata.get("io-time"), 3);
 	}
 
 	public Long getMemory() {
