@@ -30,7 +30,8 @@ public class SandboxExecutor {
 	protected boolean clean = false;
 	protected boolean trusted = false;
 	protected boolean showError = false;
-	protected String extraMetadata = null;
+	protected double ioTimeoutInSeconds = 0;
+	protected String extraMetadata = "extra_metadata";
 	
 	public SandboxExecutor directory(File directory) {
 		sandboxDir = directory.getAbsoluteFile();
@@ -51,6 +52,11 @@ public class SandboxExecutor {
 		return this;
 	}
 	
+	public SandboxExecutor ioTimeout(double ioTime) {
+		this.ioTimeoutInSeconds = ioTime;
+		return this;
+	}
+	
 	public SandboxExecutor memory(Integer memory) {
 		memoryInMB = memory;
 		return this;
@@ -68,12 +74,6 @@ public class SandboxExecutor {
 	
 	public SandboxExecutor error(String error) {
 		this.error = error;
-		return this;
-	}
-	
-	public SandboxExecutor useExtraMetadata(boolean use) {
-		if (use) this.extraMetadata = "extra_metadata";
-		else this.extraMetadata = null;
 		return this;
 	}
 
@@ -114,7 +114,7 @@ public class SandboxExecutor {
 
 			processExecutor.command(buildCommand());
 //			processExecutor.directory(sandboxDir);
-			long hardTimeout = Math.round((2*timeoutInSeconds+1+extraTimeoutInSeconds)*1000);
+			long hardTimeout = Math.round((2*timeoutInSeconds+ioTimeoutInSeconds+1+extraTimeoutInSeconds)*1000);
 			processExecutor.timeout(hardTimeout, TimeUnit.MILLISECONDS);
 			
 			System.out.println("command: " + this);
@@ -125,9 +125,9 @@ public class SandboxExecutor {
 //				FileUtils.copyFile(file, new File(sandboxDir, file.getName()));
 //			}
 			if (showError) {
-				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, new File(sandboxDir, error), extraMetadata != null);
+				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, new File(sandboxDir, error), ioTimeoutInSeconds != 0.0);
 			} else {
-				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, null, extraMetadata != null);
+				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, null, ioTimeoutInSeconds != 0.0);
 			}
 		} catch (TimeoutException e) {
 			return new SandboxResult(e);
@@ -184,10 +184,10 @@ public class SandboxExecutor {
 			isolateCommand.add("-e");
 		}
 		
-		double timeout = timeoutInSeconds;
-		if (extraMetadata != null) timeout += 1;
-		isolateCommand.add("--time="+timeout);
-		isolateCommand.add("--wall-time="+(2*timeout+1));
+		double sandboxTime = timeoutInSeconds + ioTimeoutInSeconds;
+
+		isolateCommand.add("--time="+sandboxTime);
+		isolateCommand.add("--wall-time="+(sandboxTime+timeoutInSeconds+1));
 		isolateCommand.add("--extra-time="+Math.min(timeoutInSeconds/2, 0.5));
 
 		if (memoryInMB != null) {
@@ -198,7 +198,7 @@ public class SandboxExecutor {
 		
 		isolateCommand.add("--");
 		isolateCommand.addAll(userCommand);
-		if (extraMetadata != null) isolateCommand.add(extraMetadata);
+		if (ioTimeoutInSeconds != 0) isolateCommand.add(extraMetadata);
 		
 		return isolateCommand;
 	}
