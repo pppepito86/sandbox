@@ -30,6 +30,7 @@ public class SandboxResult {
 		this.metadata = new HashMap<>();
 		this.metadata.putAll(getMetadata());
 		this.metadata.putAll(getExtraMetadata(ioTime));
+		checkIoTime(ioTime);
 		System.out.println(metadata);
 		this.commandResult = parseResult(timeout, memory, errorFile);
 	}
@@ -57,6 +58,13 @@ public class SandboxResult {
 		if (metadata.containsKey("io-time")) return (double) metadata.get("io-time");
 		if (metadata.containsKey("input-time")) return (double) metadata.get("input-time");
 		return 0.0;
+	}
+	
+	void checkIoTime(double ioTime) {
+		if (getIoTime() > ioTime) {
+			String error = String.format("***ERROR: io_time took longer than expected. Real %.3f, expected %.3f.", getIoTime(), ioTime);
+			System.out.println(error);
+		}
 	}
 	
 	public Double getTime() {
@@ -173,13 +181,9 @@ public class SandboxResult {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		if (getIoTime() > ioTime) {
-			String error = String.format("***ERROR: io_time took longer than expected. Real %.3f, expected %.3f.", getIoTime(), ioTime);
-			System.out.println(error);
-		}
-		
+
 		return map;
 	}
+	
 
 }
