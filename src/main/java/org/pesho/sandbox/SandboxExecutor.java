@@ -167,6 +167,7 @@ public class SandboxExecutor {
 		
 		isolateCommand.add("--chdir=/tmp");
 		
+		isolateCommand.add("--dir=/etc");
 		isolateCommand.add("--dir=/tmp="+sandboxDir+":rw");
 		
 		if (input != null) {
