@@ -125,9 +125,9 @@ public class SandboxExecutor {
 //				FileUtils.copyFile(file, new File(sandboxDir, file.getName()));
 //			}
 			if (showError) {
-				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, new File(sandboxDir, error), ioTimeoutInSeconds != 0.0);
+				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, new File(sandboxDir, error), ioTimeoutInSeconds);
 			} else {
-				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, null, ioTimeoutInSeconds != 0.0);
+				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, null, ioTimeoutInSeconds);
 			}
 		} catch (TimeoutException e) {
 			return new SandboxResult(e);

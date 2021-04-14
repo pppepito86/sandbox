@@ -24,12 +24,12 @@ public class SandboxResult {
 	protected final CommandResult commandResult;
 	protected final Map<String, Object> metadata;
 
-	public SandboxResult(ProcessResult processResult, File outputDir, double timeout, int memory, File errorFile, boolean hasExtraMetadata) {
+	public SandboxResult(ProcessResult processResult, File outputDir, double timeout, int memory, File errorFile, double ioTime) {
 		this.processResult = processResult;
 		this.outputDir = outputDir;
 		this.metadata = new HashMap<>();
 		this.metadata.putAll(getMetadata());
-		this.metadata.putAll(getExtraMetadata(hasExtraMetadata));
+		this.metadata.putAll(getExtraMetadata(ioTime));
 		System.out.println(metadata);
 		this.commandResult = parseResult(timeout, memory, errorFile);
 	}
@@ -53,8 +53,14 @@ public class SandboxResult {
 		return commandResult.getStatus();
 	}
 	
+	public double getIoTime() {
+		if (metadata.containsKey("io-time")) return (double) metadata.get("io-time");
+		if (metadata.containsKey("input-time")) return (double) metadata.get("input-time");
+		return 0.0;
+	}
+	
 	public Double getTime() {
-		return Precision.round((double) metadata.get("time") - (double) metadata.get("io-time"), 3);
+		return Precision.round((double) metadata.get("time") - getIoTime(), 3);
 	}
 
 	public Long getMemory() {
@@ -150,22 +156,29 @@ public class SandboxResult {
 		return map;
 	}
 
-	protected Map<String, Object> getExtraMetadata(boolean hasExtraMetadata) {
+	protected Map<String, Object> getExtraMetadata(double ioTime) {
 		Map<String, Object> map = new HashMap<>();
-		map.put("io-time", 0.0);
 		File metadataFile = new File(outputDir, "extra_metadata");
-		if (!hasExtraMetadata || !metadataFile.exists()) return map;
+		if (ioTime == 0.0 || !metadataFile.exists()) return map;
 
 		try {
 			((List<String>) FileUtils.readLines(metadataFile)).stream().forEach(line -> {
 				if (line.contains(":")) {
 					String[] split = line.split(":");
 					if ("io-time".equals(split[0])) map.put("io-time", Double.valueOf(split[1].trim()));
+					if ("input-time".equals(split[0])) map.put("input-time", Double.valueOf(split[1].trim()));
+					if ("output-time".equals(split[0])) map.put("output-time", Double.valueOf(split[1].trim()));
 				}
 			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		if (getIoTime() > ioTime) {
+			String error = String.format("***ERROR: io_time took longer than expected. Real %.3f, expected %.3f.", getIoTime(), ioTime);
+			System.out.println(error);
+		}
+		
 		return map;
 	}
 
