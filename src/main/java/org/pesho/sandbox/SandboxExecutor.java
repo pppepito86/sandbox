@@ -189,7 +189,7 @@ public class SandboxExecutor {
 
 		isolateCommand.add("--time="+sandboxTime);
 		isolateCommand.add("--wall-time="+(sandboxTime+timeoutInSeconds+1));
-		isolateCommand.add("--extra-time="+Math.min(timeoutInSeconds/2, 0.5));
+		isolateCommand.add("--extra-time="+(sandboxTime+Math.min(timeoutInSeconds/2, 0.5)));
 
 		if (memoryInMB != null) {
 			isolateCommand.add("--cg-mem="+(1024 * (memoryInMB+5)));
