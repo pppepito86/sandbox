@@ -24,6 +24,7 @@ public class SandboxExecutor {
 	protected double timeoutInSeconds = 5.0;
 	protected double extraTimeoutInSeconds = 1.0;
 	protected Integer memoryInMB = 256;
+	private int extraMemory = 5;
 	protected String input = null;
 	protected String output = "output";
 	protected String error = "error";
@@ -61,7 +62,12 @@ public class SandboxExecutor {
 		memoryInMB = memory;
 		return this;
 	}
-
+	
+	public SandboxExecutor extraMemory(Integer memory) {
+		extraMemory = memory;
+		return this;
+	}
+	
 	public SandboxExecutor input(String input) {
 		this.input = input;
 		return this;
@@ -192,7 +198,7 @@ public class SandboxExecutor {
 		isolateCommand.add("--extra-time="+(sandboxTime+Math.min(timeoutInSeconds/2, 0.5)));
 
 		if (memoryInMB != null) {
-			isolateCommand.add("--cg-mem="+(1024 * (memoryInMB+5)));
+			isolateCommand.add("--cg-mem="+(1024 * (memoryInMB+extraMemory)));
 		}
 		
 		isolateCommand.add("--run");
