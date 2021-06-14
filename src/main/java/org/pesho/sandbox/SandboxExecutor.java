@@ -185,8 +185,8 @@ public class SandboxExecutor {
 		isolateCommand.add("--meta="+new File(sandboxDir, "metadata").getAbsolutePath());
 		
 		isolateCommand.add("--fsize="+(1<<20));
-		isolateCommand.add("--processes="+(trusted?1000:1));
-		
+		isolateCommand.add("--processes="+(trusted?1000:10));
+
 		if (trusted) {
 			isolateCommand.add("-e");
 		}
