@@ -114,11 +114,9 @@ public class SandboxExecutor {
 	public SandboxResult execute() {
 		try {
 			createSandbox();
-			if (!sandboxDir.exists()) {
-				sandboxDir.mkdirs();
-				new ProcessExecutor("chmod", "-R", "777", sandboxDir.getAbsolutePath()).execute();
-				System.out.println("sandbox dir: " + sandboxDir.getAbsolutePath());
-			}
+			if (!sandboxDir.exists()) sandboxDir.mkdirs();
+			new ProcessExecutor("chmod", "-R", "777", sandboxDir.getAbsolutePath()).execute();
+			System.out.println("sandbox dir: " + sandboxDir.getAbsolutePath());
 
 			processExecutor.command(buildCommand());
 //			processExecutor.directory(sandboxDir);
