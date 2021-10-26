@@ -21,12 +21,14 @@ public class SandboxResult {
 
 	protected final ProcessResult processResult;
 	protected final File outputDir;
+	protected final File metadataFile;
 	protected final CommandResult commandResult;
 	protected final Map<String, Object> metadata;
 
-	public SandboxResult(ProcessResult processResult, File outputDir, double timeout, int memory, File errorFile, double ioTime) {
+	public SandboxResult(ProcessResult processResult, File outputDir, File metadataFile, double timeout, int memory, File errorFile, double ioTime) {
 		this.processResult = processResult;
 		this.outputDir = outputDir;
+		this.metadataFile = metadataFile;
 		this.metadata = new HashMap<>();
 		this.metadata.putAll(getMetadata());
 		this.metadata.putAll(getExtraMetadata(ioTime));
@@ -35,10 +37,11 @@ public class SandboxResult {
 		this.commandResult = parseResult(timeout, memory, errorFile);
 	}
 
-	public SandboxResult(Exception e) {
+	public SandboxResult(Exception e, File metadataFile) {
 		this.commandResult = new CommandResult(SYSTEM_ERROR, e.getMessage());
 		this.processResult = null;
 		this.outputDir = null;
+		this.metadataFile = metadataFile;
 		this.metadata = getMetadata();
 	}
 
@@ -140,7 +143,6 @@ public class SandboxResult {
 
 	protected Map<String, Object> getMetadata() {
 		Map<String, Object> map = new HashMap<>();
-		File metadataFile = new File(outputDir, "metadata");
 		if (!metadataFile.exists()) return map;
 
 		try {

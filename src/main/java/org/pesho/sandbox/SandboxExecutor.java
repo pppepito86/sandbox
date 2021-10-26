@@ -114,9 +114,11 @@ public class SandboxExecutor {
 	public SandboxResult execute() {
 		try {
 			createSandbox();
-			if (!sandboxDir.exists()) sandboxDir.mkdirs();
-			new ProcessExecutor("chmod", "-R", "777", sandboxDir.getAbsolutePath()).execute();
-			System.out.println("sandbox dir: " + sandboxDir.getAbsolutePath());
+			if (!sandboxDir.exists()) {
+				sandboxDir.mkdirs();
+				new ProcessExecutor("chmod", "-R", "777", sandboxDir.getAbsolutePath()).execute();
+				System.out.println("sandbox dir: " + sandboxDir.getAbsolutePath());
+			}
 
 			processExecutor.command(buildCommand());
 //			processExecutor.directory(sandboxDir);
@@ -131,15 +133,15 @@ public class SandboxExecutor {
 //				FileUtils.copyFile(file, new File(sandboxDir, file.getName()));
 //			}
 			if (showError) {
-				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, new File(sandboxDir, error), ioTimeoutInSeconds);
+				return new SandboxResult(processResult, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, new File(sandboxDir, error), ioTimeoutInSeconds);
 			} else {
-				return new SandboxResult(processResult, sandboxDir, timeoutInSeconds, memoryInMB, null, ioTimeoutInSeconds);
+				return new SandboxResult(processResult, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, null, ioTimeoutInSeconds);
 			}
 		} catch (TimeoutException e) {
-			return new SandboxResult(e);
+			return new SandboxResult(e, new File(sandboxDir, "metadata"+boxId));
 		} catch (Exception e) {
 			e.printStackTrace();
-			return new SandboxResult(e);
+			return new SandboxResult(e, new File(sandboxDir, "metadata"+boxId));
 		} finally {
 			try {
 				destroySandbox();
@@ -182,7 +184,7 @@ public class SandboxExecutor {
 		isolateCommand.add("--stdout=/tmp/"+output);
 		isolateCommand.add("--stderr=/tmp/"+error);
 		
-		isolateCommand.add("--meta="+new File(sandboxDir, "metadata").getAbsolutePath());
+		isolateCommand.add("--meta="+new File(sandboxDir, "metadata"+boxId).getAbsolutePath());
 		
 		isolateCommand.add("--fsize="+(1<<20));
 		isolateCommand.add("--processes="+(trusted?1000:10));
