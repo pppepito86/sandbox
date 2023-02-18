@@ -33,6 +33,7 @@ public class SandboxExecutor {
 	protected boolean showError = false;
 	protected double ioTimeoutInSeconds = 0;
 	protected String extraMetadata = "extra_metadata";
+	protected int processes = 1;
 	
 	public SandboxExecutor directory(File directory) {
 		sandboxDir = directory.getAbsoluteFile();
@@ -85,6 +86,13 @@ public class SandboxExecutor {
 
 	public SandboxExecutor trusted(boolean trusted) {
 		this.trusted = trusted;
+		if (trusted) this.processes = 1000;
+		else this.processes = 1;
+		return this;
+	}
+	
+	public SandboxExecutor processes(int processes) {
+		this.processes = processes;
 		return this;
 	}
 	
@@ -199,7 +207,7 @@ public class SandboxExecutor {
 		isolateCommand.add("--meta="+new File(sandboxDir, "metadata"+boxId).getAbsolutePath());
 		
 		isolateCommand.add("--fsize="+(1<<20));
-		isolateCommand.add("--processes="+(trusted?1000:10));
+		isolateCommand.add("--processes="+processes);
 
 		if (trusted) {
 			isolateCommand.add("-e");
