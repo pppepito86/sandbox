@@ -115,9 +115,23 @@ public class SandboxExecutor {
 		try {
 			createSandbox();
 			if (!sandboxDir.exists()) sandboxDir.mkdirs();
-			new ProcessExecutor("chmod", "-R", "777", sandboxDir.getAbsolutePath()).execute();
+			new ProcessExecutor("chmod", "-R", (trusted)?"777":"755", sandboxDir.getAbsolutePath()).execute();
 			System.out.println("sandbox dir: " + sandboxDir.getAbsolutePath());
 
+			File errorFile = new File(sandboxDir.getAbsolutePath()+"/"+error);
+			errorFile.createNewFile();
+			new ProcessExecutor("chmod", "-R", "722", errorFile.getAbsolutePath()).execute();
+
+			File outputFile = new File(sandboxDir.getAbsolutePath()+"/"+output);
+			outputFile.createNewFile();
+			new ProcessExecutor("chmod", "-R", "722", outputFile.getAbsolutePath()).execute();
+
+			if (ioTimeoutInSeconds != 0) {
+				File extraMetadataFile = new File(sandboxDir.getAbsolutePath()+"/"+extraMetadata);
+				extraMetadataFile.createNewFile();
+				new ProcessExecutor("chmod", "-R", "722", extraMetadataFile.getAbsolutePath()).execute();
+			}
+			
 			processExecutor.command(buildCommand());
 //			processExecutor.directory(sandboxDir);
 			long hardTimeout = Math.round((2*timeoutInSeconds+ioTimeoutInSeconds+1+extraTimeoutInSeconds)*1000);
