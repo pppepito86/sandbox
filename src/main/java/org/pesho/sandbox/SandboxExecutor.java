@@ -128,11 +128,11 @@ public class SandboxExecutor {
 
 			File errorFile = new File(sandboxDir.getAbsolutePath()+"/"+error);
 			errorFile.createNewFile();
-			new ProcessExecutor("chmod", "-R", "722", errorFile.getAbsolutePath()).execute();
+			new ProcessExecutor("chmod", "-R", "727", errorFile.getAbsolutePath()).execute();
 
 			File outputFile = new File(sandboxDir.getAbsolutePath()+"/"+output);
 			outputFile.createNewFile();
-			new ProcessExecutor("chmod", "-R", "722", outputFile.getAbsolutePath()).execute();
+			new ProcessExecutor("chmod", "-R", "727", outputFile.getAbsolutePath()).execute();
 
 			if (ioTimeoutInSeconds != 0) {
 				File extraMetadataFile = new File(sandboxDir.getAbsolutePath()+"/"+extraMetadata);
