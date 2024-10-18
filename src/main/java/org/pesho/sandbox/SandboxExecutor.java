@@ -34,6 +34,7 @@ public class SandboxExecutor {
 	protected double ioTimeoutInSeconds = 0;
 	protected String extraMetadata = "extra_metadata";
 	protected int processes = 1;
+	protected int openFiles = 64;
 	
 	public SandboxExecutor directory(File directory) {
 		sandboxDir = directory.getAbsoluteFile();
@@ -93,6 +94,11 @@ public class SandboxExecutor {
 	
 	public SandboxExecutor processes(int processes) {
 		this.processes = processes;
+		return this;
+	}
+
+	public SandboxExecutor openFiles (int openFiles) {
+		this.openFiles = openFiles;
 		return this;
 	}
 	
@@ -208,6 +214,7 @@ public class SandboxExecutor {
 		
 		isolateCommand.add("--fsize="+(1<<20));
 		isolateCommand.add("--processes="+processes);
+		isolateCommand.add("--open-files="+openFiles);
 
 		if (trusted) {
 			isolateCommand.add("-e");
