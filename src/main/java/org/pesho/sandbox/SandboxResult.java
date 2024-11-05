@@ -14,7 +14,6 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.util.Precision;
-import org.zeroturnaround.exec.ProcessOutput;
 import org.zeroturnaround.exec.ProcessResult;
 
 public class SandboxResult {
@@ -34,7 +33,7 @@ public class SandboxResult {
 		this.metadata.putAll(getExtraMetadata(ioTime));
 		checkIoTime(ioTime);
 		System.out.println(metadata);
-		this.commandResult = parseResult(timeout, memory, errorFile);
+		this.commandResult = parseResult(timeout, ioTime, memory, errorFile);
 	}
 
 	public SandboxResult(Exception e, File metadataFile) {
@@ -43,10 +42,6 @@ public class SandboxResult {
 		this.outputDir = null;
 		this.metadataFile = metadataFile;
 		this.metadata = getMetadata();
-	}
-
-	public ProcessOutput getOutput() {
-		return processResult.getOutput();
 	}
 
 	public CommandResult getResult() {
@@ -88,7 +83,7 @@ public class SandboxResult {
 		return (String) metadata.get("message");
 	}
 	
-	protected CommandResult parseResult(double timeout, int memory, File errorFile) {
+	protected CommandResult parseResult(double timeout, double ioTime, int memory, File errorFile) {
 //		if (processResult.getExitValue() == 127) return new CommandResult(SYSTEM_ERROR, "sandbox.sh not found");
 //		else if (processResult.getExitValue() != 0) return new CommandResult(SYSTEM_ERROR, "docker failed with exitcode (" + processResult.getExitValue() + ")");
 
@@ -109,7 +104,7 @@ public class SandboxResult {
 				}
 			}
 
-			double extraTime = Precision.round(timeout+Math.min(timeout/2, 0.5), 3);
+			double extraTime = Precision.round(timeout+ioTime+Math.min(timeout/2, 0.5), 3);
 			if (getTime() >= extraTime) {
 				return new CommandResult(TIMEOUT, Messages.EXTRA_TIME_LIMIT_EXCEEDED, exitCode, -extraTime, memoryToShow);
 			}

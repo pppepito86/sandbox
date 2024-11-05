@@ -9,6 +9,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
+import org.zeroturnaround.exec.InvalidExitValueException;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 
@@ -22,7 +23,7 @@ public class SandboxExecutor {
 	protected List<String> userCommand = new ArrayList<>();
 	protected int boxId = 0;
 	protected double timeoutInSeconds = 5.0;
-	protected double extraTimeoutInSeconds = 1.0;
+	protected double extraTimeoutInSeconds = 2;
 	protected Integer memoryInMB = 256;
 	private int extraMemory = 5;
 	protected String input = null;
@@ -149,6 +150,7 @@ public class SandboxExecutor {
 			processExecutor.command(buildCommand());
 //			processExecutor.directory(sandboxDir);
 			long hardTimeout = Math.round((2*timeoutInSeconds+ioTimeoutInSeconds+1+extraTimeoutInSeconds)*1000);
+			processExecutor.destroyOnExit();
 			processExecutor.timeout(hardTimeout, TimeUnit.MILLISECONDS);
 			
 			System.out.println("command: " + this);
@@ -165,6 +167,12 @@ public class SandboxExecutor {
 			}
 		} catch (TimeoutException e) {
 			return new SandboxResult(e, new File(sandboxDir, "metadata"+boxId));
+		} catch (InvalidExitValueException e) {
+			if (showError) {
+				return new SandboxResult(null, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, new File(sandboxDir, error), ioTimeoutInSeconds);
+			} else {
+				return new SandboxResult(null, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, null, ioTimeoutInSeconds);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new SandboxResult(e, new File(sandboxDir, "metadata"+boxId));
