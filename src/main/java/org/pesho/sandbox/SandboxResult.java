@@ -75,7 +75,8 @@ public class SandboxResult {
 	}
 
 	public Long getMemory() {
-		return (Long) metadata.get("cg-mem");
+		if (metadata.containsKey("cg-mem")) return (Long) metadata.get("cg-mem");
+		return (Long) metadata.get("max-rss");
 	}
 
 	public Integer getExitcode() {
@@ -154,6 +155,10 @@ public class SandboxResult {
 					if ("cg-mem".equals(split[0])) {
 						long maxMemory = Long.valueOf(split[1].trim());
 						map.put("cg-mem", maxMemory);
+					}
+					if ("max-rss".equals(split[0])) {
+						long maxMemory = Long.valueOf(split[1].trim());
+                                                map.put("max-rss", maxMemory);
 					}
 					if ("exitcode".equals(split[0])) map.put("exitcode", Integer.valueOf(split[1].trim()));
 					if ("status".equals(split[0])) map.put("status", split[1].trim());
