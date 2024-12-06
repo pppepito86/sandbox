@@ -32,6 +32,7 @@ public class SandboxExecutor {
 	protected boolean clean = false;
 	protected boolean trusted = false;
 	protected boolean showError = false;
+	protected boolean outputIsError = false;
 	protected double ioTimeoutInSeconds = 0;
 	protected String extraMetadata = "extra_metadata";
 	protected int processes = 1;
@@ -107,6 +108,11 @@ public class SandboxExecutor {
 		this.showError = true;
 		return this;
 	}
+
+	public SandboxExecutor outputIsError() {
+		this.outputIsError = true;
+		return this;
+	}
 	
 	public SandboxExecutor clean(boolean clean) {
 		this.clean = clean;
@@ -161,7 +167,7 @@ public class SandboxExecutor {
 //				FileUtils.copyFile(file, new File(sandboxDir, file.getName()));
 //			}
 			if (showError) {
-				return new SandboxResult(processResult, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, new File(sandboxDir, error), ioTimeoutInSeconds);
+				return new SandboxResult(processResult, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, new File(sandboxDir, (outputIsError)?output:error), ioTimeoutInSeconds);
 			} else {
 				return new SandboxResult(processResult, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, null, ioTimeoutInSeconds);
 			}
@@ -169,7 +175,7 @@ public class SandboxExecutor {
 			return new SandboxResult(e, new File(sandboxDir, "metadata"+boxId));
 		} catch (InvalidExitValueException e) {
 			if (showError) {
-				return new SandboxResult(null, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, new File(sandboxDir, error), ioTimeoutInSeconds);
+				return new SandboxResult(null, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, new File(sandboxDir, (outputIsError)?output:error), ioTimeoutInSeconds);
 			} else {
 				return new SandboxResult(null, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, null, ioTimeoutInSeconds);
 			}
