@@ -24,7 +24,7 @@ public class SandboxResult {
 	protected final CommandResult commandResult;
 	protected final Map<String, Object> metadata;
 
-	public SandboxResult(ProcessResult processResult, File outputDir, File metadataFile, double timeout, int memory, File errorFile, double ioTime) {
+	public SandboxResult(ProcessResult processResult, File outputDir, File metadataFile, double timeout, double ioTimeout, double extraTimeout, int memory, int extraMemory, File errorFile, double ioTime) {
 		this.processResult = processResult;
 		this.outputDir = outputDir;
 		this.metadataFile = metadataFile;
@@ -33,7 +33,7 @@ public class SandboxResult {
 		this.metadata.putAll(getExtraMetadata(ioTime));
 		checkIoTime(ioTime);
 		System.out.println(metadata);
-		this.commandResult = parseResult(timeout, ioTime, memory, errorFile);
+		this.commandResult = parseResult(timeout, ioTimeout, extraTimeout, memory, extraMemory, errorFile);
 	}
 
 	public SandboxResult(Exception e, File metadataFile) {
@@ -83,12 +83,12 @@ public class SandboxResult {
 		return (String) metadata.get("message");
 	}
 	
-	protected CommandResult parseResult(double timeout, double ioTime, int memory, File errorFile) {
+	protected CommandResult parseResult(double timeout, double ioTimeout, double extraTimeout, int memory, int extraMemory, File errorFile) {
 //		if (processResult.getExitValue() == 127) return new CommandResult(SYSTEM_ERROR, "sandbox.sh not found");
 //		else if (processResult.getExitValue() != 0) return new CommandResult(SYSTEM_ERROR, "docker failed with exitcode (" + processResult.getExitValue() + ")");
 
 		Integer exitCode = getExitcode();
-		Long memoryToShow = getMemory() == null ? null : (getMemory() >= (memory+4)*1024 ? -1024*(memory+4) : getMemory());
+		Long memoryToShow = getMemory() == null ? null : (getMemory() >= (memory+extraMemory-1)*1024 ? -1024*(memory+extraMemory-1) : getMemory());
 		if (memoryToShow == null) System.out.println("No memory to show");
 		
 		try {
@@ -104,7 +104,7 @@ public class SandboxResult {
 				}
 			}
 
-			double extraTime = Precision.round(timeout+ioTime+Math.min(timeout/2, 0.5), 3);
+			double extraTime = Precision.round(extraTimeout - ioTimeout, 3);
 			if (getTime() >= extraTime) {
 				return new CommandResult(TIMEOUT, Messages.EXTRA_TIME_LIMIT_EXCEEDED, exitCode, -extraTime, memoryToShow);
 			}
@@ -146,7 +146,10 @@ public class SandboxResult {
 				if (line.contains(":")) {
 					String[] split = line.split(":");
 					if ("time".equals(split[0])) map.put("time", Double.valueOf(split[1].trim()));
-					if ("time-wall".equals(split[0])) map.put("time-wall", Double.valueOf(split[1].trim()));
+					if ("time-wall".equals(split[0])) {
+						if (split[1].trim().matches("-?\\d+(\\.\\d+)?")) map.put("time-wall", Double.valueOf(split[1].trim()));
+						else map.put("time-wall", 0.);
+					}
 					if ("cg-mem".equals(split[0])) {
 						long maxMemory = Long.valueOf(split[1].trim());
 						map.put("cg-mem", maxMemory);

@@ -22,6 +22,7 @@ public class SandboxExecutor {
 	protected File sandboxDir = new File(".").getAbsoluteFile();
 	protected List<String> userCommand = new ArrayList<>();
 	protected int boxId = 0;
+	protected boolean isOfficial = true;
 	protected double timeoutInSeconds = 5.0;
 	protected double extraTimeoutInSeconds = 2;
 	protected Integer memoryInMB = 256;
@@ -52,6 +53,11 @@ public class SandboxExecutor {
 		return this;
 	}
 	
+	public SandboxExecutor isOfficial(boolean isOfficial) {
+		this.isOfficial = isOfficial;
+		return this;
+	}
+
 	public SandboxExecutor timeout(double time) {
 		timeoutInSeconds = time;
 		return this;
@@ -131,7 +137,19 @@ public class SandboxExecutor {
 	public void destroySandbox() throws Exception {
 		new ProcessExecutor().command("isolate", "--box-id="+boxId, "--cg", "--cleanup").execute();
 	}
-	
+
+	private Double calcExtraTimeout() {
+		return (timeoutInSeconds + ioTimeoutInSeconds) + Math.min(timeoutInSeconds/2, 0.5) + (isOfficial ? 0 : Math.min(timeoutInSeconds, 1));
+	}
+
+	private Double calcWallTimeout() {
+		return calcExtraTimeout() + (isOfficial ? timeoutInSeconds + 1 : 1);
+	}
+
+	private int calcExtraMemory() {
+		return extraMemory + (isOfficial ? 0 : Math.min(memoryInMB, 1024));
+	}
+
 	public SandboxResult execute() {
 		try {
 			createSandbox();
@@ -155,7 +173,7 @@ public class SandboxExecutor {
 			
 			processExecutor.command(buildCommand());
 //			processExecutor.directory(sandboxDir);
-			long hardTimeout = Math.round((2*timeoutInSeconds+ioTimeoutInSeconds+1+extraTimeoutInSeconds)*1000);
+			long hardTimeout = Math.round((calcWallTimeout() + extraTimeoutInSeconds)*1000);
 			processExecutor.destroyOnExit();
 			processExecutor.timeout(hardTimeout, TimeUnit.MILLISECONDS);
 			
@@ -167,17 +185,17 @@ public class SandboxExecutor {
 //				FileUtils.copyFile(file, new File(sandboxDir, file.getName()));
 //			}
 			if (showError) {
-				return new SandboxResult(processResult, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, new File(sandboxDir, (outputIsError)?output:error), ioTimeoutInSeconds);
+				return new SandboxResult(processResult, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, ioTimeoutInSeconds, calcExtraTimeout(), memoryInMB, calcExtraMemory(), new File(sandboxDir, (outputIsError)?output:error), ioTimeoutInSeconds);
 			} else {
-				return new SandboxResult(processResult, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, null, ioTimeoutInSeconds);
+				return new SandboxResult(processResult, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, ioTimeoutInSeconds, calcExtraTimeout(), memoryInMB, calcExtraMemory(), null, ioTimeoutInSeconds);
 			}
 		} catch (TimeoutException e) {
 			return new SandboxResult(e, new File(sandboxDir, "metadata"+boxId));
 		} catch (InvalidExitValueException e) {
 			if (showError) {
-				return new SandboxResult(null, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, new File(sandboxDir, (outputIsError)?output:error), ioTimeoutInSeconds);
+				return new SandboxResult(null, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, ioTimeoutInSeconds, calcExtraTimeout(), memoryInMB, calcExtraMemory(), new File(sandboxDir, (outputIsError)?output:error), ioTimeoutInSeconds);
 			} else {
-				return new SandboxResult(null, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, memoryInMB, null, ioTimeoutInSeconds);
+				return new SandboxResult(null, sandboxDir, new File(sandboxDir, "metadata"+boxId), timeoutInSeconds, ioTimeoutInSeconds, calcExtraTimeout(), memoryInMB, calcExtraMemory(), null, ioTimeoutInSeconds);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -237,11 +255,11 @@ public class SandboxExecutor {
 		double sandboxTime = timeoutInSeconds + ioTimeoutInSeconds;
 
 		isolateCommand.add("--time="+sandboxTime);
-		isolateCommand.add("--wall-time="+(sandboxTime+timeoutInSeconds+1));
-		isolateCommand.add("--extra-time="+(sandboxTime+Math.min(timeoutInSeconds/2, 0.5)));
+		isolateCommand.add("--wall-time="+calcWallTimeout());
+		isolateCommand.add("--extra-time="+calcExtraTimeout());
 
 		if (memoryInMB != null) {
-			isolateCommand.add("--cg-mem="+(1024 * (memoryInMB+extraMemory)));
+			isolateCommand.add("--cg-mem="+(1024 * (memoryInMB+calcExtraMemory())));
 		}
 		
 		isolateCommand.add("--run");
