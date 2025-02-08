@@ -109,12 +109,16 @@ public class SandboxResult {
 				return new CommandResult(TIMEOUT, Messages.EXTRA_TIME_LIMIT_EXCEEDED, exitCode, -extraTime, memoryToShow);
 			}
 
+			if (getMemory() >= (memory+extraMemory)*1024) {
+				return new CommandResult(OOM, Messages.MEMORY_LIMIT_EXCEEDED, exitCode, getTime(), memoryToShow);
+			}
+
 			if (getTime() > timeout) {
 				return new CommandResult(TIMEOUT, Messages.TIME_LIMIT_EXCEEDED, exitCode, getTime(), memoryToShow);
 			}
 				
 			// OOM
-			if (getMemory() >= memory*1024) {
+			if (getMemory() > memory*1024) {
 				return new CommandResult(OOM, Messages.MEMORY_LIMIT_EXCEEDED, exitCode, getTime(), memoryToShow);
 			}
 			// Suicide with signal (memory limit, segfault, abort): returning the error to the user.
