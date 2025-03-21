@@ -32,6 +32,7 @@ public class SandboxExecutor {
 	protected String error = "error";
 	protected boolean clean = false;
 	protected boolean trusted = false;
+	protected List<String> trustedDirectories = new ArrayList<>();
 	protected boolean showError = false;
 	protected boolean outputIsError = false;
 	protected double ioTimeoutInSeconds = 0;
@@ -97,6 +98,11 @@ public class SandboxExecutor {
 		this.trusted = trusted;
 		if (trusted) this.processes = 1000;
 		else this.processes = 1;
+		return this;
+	}
+
+	public SandboxExecutor trustedDirectories(List<String> trustedDirectories) {
+		this.trustedDirectories = trustedDirectories;
 		return this;
 	}
 	
@@ -234,6 +240,9 @@ public class SandboxExecutor {
 		isolateCommand.add("--chdir=/tmp");
 		
 		isolateCommand.add("--dir=/etc");
+		for (String directory : trustedDirectories) {
+			isolateCommand.add("--dir="+directory+":rw");	
+		}
 		isolateCommand.add("--dir=/tmp="+sandboxDir+":rw");
 		
 		if (input != null) {
