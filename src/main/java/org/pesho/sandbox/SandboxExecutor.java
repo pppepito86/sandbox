@@ -163,6 +163,10 @@ public class SandboxExecutor {
 			new ProcessExecutor("chmod", "-R", (trusted)?"777":"755", sandboxDir.getAbsolutePath()).execute();
 			System.out.println("sandbox dir: " + sandboxDir.getAbsolutePath());
 
+			for (String directory : trustedDirectories) {
+				new ProcessExecutor("chmod", "-R", (trusted)?"777":"755", directory).execute();
+			}
+
 			File errorFile = new File(sandboxDir.getAbsolutePath()+"/"+error);
 			errorFile.createNewFile();
 			new ProcessExecutor("chmod", "-R", "727", errorFile.getAbsolutePath()).execute();
