@@ -182,7 +182,14 @@ public class SandboxResult {
 			((List<String>) FileUtils.readLines(metadataFile)).stream().forEach(line -> {
 				if (line.contains(":")) {
 					String[] split = line.split(":");
-					if ("io-time".equals(split[0])) map.put("io-time", Double.valueOf(split[1].trim()));
+					if ("io-time".equals(split[0])) {
+                                                try {
+                                                        double time = Double.valueOf(split[1].trim());
+                                                        map.put("io-time", time);
+                                                }
+                                                catch (NumberFormatException e) {
+                                                }
+                                        }
 					if ("input-time".equals(split[0])) map.put("input-time", Double.valueOf(split[1].trim()));
 					if ("output-time".equals(split[0])) map.put("output-time", Double.valueOf(split[1].trim()));
 				}

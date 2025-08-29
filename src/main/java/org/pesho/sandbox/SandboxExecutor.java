@@ -239,7 +239,6 @@ public class SandboxExecutor {
 		isolateCommand.add("--box-id="+boxId);
 	
 		isolateCommand.add("--cg");
-		//isolateCommand.add("--cg-timing"); compatibility with older isolate using cgroup v1
 		
 		isolateCommand.add("--chdir=/tmp");
 		
