@@ -5,7 +5,7 @@ import static org.hamcrest.CoreMatchers.is;
 import java.io.File;
 
 import org.junit.Assert;
-import org.junit.Test;
+//import org.junit.Test;
 import org.pesho.sandbox.SandboxExecutor;
 
 public class CommandTest {

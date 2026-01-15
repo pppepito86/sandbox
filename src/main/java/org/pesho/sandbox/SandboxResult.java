@@ -96,10 +96,9 @@ public class SandboxResult {
 			if ("XX".equals(metadata.get("status"))) {
 				return new CommandResult(SYSTEM_ERROR);
 			}
-		    // Timeout: returning the error to the user.
+			// TO
 			if ("TO".equals(metadata.get("status"))) {
-				String error = getError(errorFile);
-				if (error != null && error.contains("wall clock")) {
+				if (metadata.get("message") != null && metadata.get("message").toString().contains("wall clock")) {
 					return new CommandResult(TIMEOUT, Messages.WALL_CLOCK_TIMEOUT, exitCode, Precision.round(-getTime(), 3), memoryToShow);
 				}
 			}
@@ -125,7 +124,7 @@ public class SandboxResult {
 			if ("SG".equals(metadata.get("status"))) {
 				return new CommandResult(PROGRAM_ERROR, getError(errorFile), exitCode, getTime(), memoryToShow);
 			}
-			if (getExitcode() != 0) {
+			if (exitCode != null && exitCode != 0) {
 				return new CommandResult(PROGRAM_ERROR, getError(errorFile), exitCode, getTime(), memoryToShow);
 			}
 			
@@ -160,7 +159,7 @@ public class SandboxResult {
 					}
 					if ("max-rss".equals(split[0])) {
 						long maxMemory = Long.valueOf(split[1].trim());
-                                                map.put("max-rss", maxMemory);
+						map.put("max-rss", maxMemory);
 					}
 					if ("exitcode".equals(split[0])) map.put("exitcode", Integer.valueOf(split[1].trim()));
 					if ("status".equals(split[0])) map.put("status", split[1].trim());
