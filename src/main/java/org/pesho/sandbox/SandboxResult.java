@@ -66,6 +66,11 @@ public class SandboxResult {
 	}
 	
 	public Double getTime() {
+		if (getIoTime() > (double) metadata.get("time")) {
+			String error = String.format("***WARNING: io_time longer than total execution. io_time %.3f, total execution %.3f.", getIoTime(), (double) metadata.get("time"));
+			System.out.println(error);
+			return Precision.round(0., 3);
+		}
 		return Precision.round((double) metadata.get("time") - getIoTime(), 3);
 	}
 
