@@ -25,7 +25,7 @@ public class SandboxExecutor {
 	protected boolean isOfficial = true;
 	protected double timeoutInSeconds = 5.0;
 	protected double extraTimeoutInSeconds = 2;
-	protected Integer memoryInMB = 256;
+	protected Integer memoryInMB = 1024;
 	private int extraMemory = 5;
 	protected String input = null;
 	protected String output = "output";
@@ -39,7 +39,8 @@ public class SandboxExecutor {
 	protected String extraMetadata = "extra_metadata";
 	protected int processes = 1;
 	protected int openFiles = 64;
-	
+	protected String etcDir = "/etc";
+
 	public SandboxExecutor directory(File directory) {
 		sandboxDir = directory.getAbsoluteFile();
 		return this;
@@ -115,7 +116,17 @@ public class SandboxExecutor {
 		this.openFiles = openFiles;
 		return this;
 	}
-	
+
+	/**
+	 * Bind a curated directory at /etc inside the box instead of the host /etc.
+	 * Used by the compile steps so a submission cannot exfiltrate host files via
+	 * #include "/etc/...". A null argument keeps the default (host /etc).
+	 */
+	public SandboxExecutor etcDir (String etcDir) {
+		if (etcDir != null) this.etcDir = etcDir;
+		return this;
+	}
+
 	public SandboxExecutor showError() {
 		this.showError = true;
 		return this;
@@ -241,8 +252,9 @@ public class SandboxExecutor {
 		isolateCommand.add("--cg");
 		
 		isolateCommand.add("--chdir=/tmp");
-		
-		isolateCommand.add("--dir=/etc");
+
+		if ("/etc".equals(etcDir)) isolateCommand.add("--dir=/etc");
+		else isolateCommand.add("--dir=/etc=" + etcDir);
 		for (String directory : trustedDirectories) {
 			isolateCommand.add("--dir="+directory+":rw");	
 		}
